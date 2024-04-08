@@ -509,7 +509,7 @@ def GetStates(SL, model):
     return newstates, model
 
 
-def GetFeatures(x, y, SL, dt, model):
+def GetFeatures(x, y, SL, model):
     """Compute the diffusional fingerprint for a trajectory.
 
     Parameters
@@ -531,16 +531,16 @@ def GetFeatures(x, y, SL, dt, model):
     """
     out = msd(x, y, 0.5)
     maxpair = GetMax(x, y)
-    beta, alpha, pval = Scalings(out, dt)
+    #beta, alpha, pval = Scalings(out, dt)
     states, model = GetStates(SL, model)
 
     t0, t1, t2, t3 = Time_in(states)
     lifetime = Lifetime(states)
     return np.array(
         [
-            alpha,
-            beta,
-            pval,
+            #alpha,
+            #beta,
+            #pval,
             Efficiency(x, y),
             FractalDim(x, y, maxpair),
             Gaussianity(x, y, out),
@@ -573,5 +573,5 @@ def ThirdAppender(d, model):
     ndarray or str
         Returns the features describing the diffusional fingerprint
     """
-    x, y, SL, dt = d
-    return GetFeatures(x, y, SL, dt, model)
+    x, y, SL = d
+    return GetFeatures(x, y, SL, model)
