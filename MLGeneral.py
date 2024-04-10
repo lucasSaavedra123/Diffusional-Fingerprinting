@@ -1471,6 +1471,25 @@ class ML:
                         "meanMSD",
                     ]
                 )
+            elif X.shape[-1] == 14:
+                names = np.array(
+                    [
+                        "Efficiency",
+                        "Dimension",
+                        "Gaussianity",
+                        "Kurtosis",
+                        "MSDratio",
+                        "Trappedness",
+                        "T0",
+                        "T1",
+                        "T2",
+                        "T3",
+                        "<tau>",
+                        "N",
+                        "meanSL",
+                        "meanMSD",
+                    ]
+                )
             else:
                 names = np.arange(X.shape[-1])
         from matplotlib.colors import LinearSegmentedColormap

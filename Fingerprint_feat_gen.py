@@ -3,6 +3,7 @@ Library for generation of diffusional fingerprints
 
 Henrik Dahl Pinholt
 """
+from collections import defaultdict
 import matplotlib
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,7 +12,7 @@ import numpy as np
 # from iminuit import Minuit
 import inspect
 import scipy.stats as stats
-
+from scipy.spatial import distance_matrix
 def Chi2Fit(
     x,
     y,
@@ -152,6 +153,7 @@ def GetMax(x, y):
         Largest squared distance between any two points in the set.
 
     """
+    """
     from itertools import combinations
     from random import randint
 
@@ -165,10 +167,13 @@ def GetMax(x, y):
         if square_distance(*pair) > max_square_distance:
             max_square_distance = square_distance(*pair)
             max_pair = pair
+    """
+    A = np.array([x, y]).T
+    max_square_distance = np.max(distance_matrix(A,A)**2)
     return max_square_distance
 
 
-def msd(x, y, frac):
+def msd(x, y, t, dt, frac):
     """Computes the mean squared displacement (msd) for a trajectory (x,y) up to
     frac*len(x) of the trajectory.
 
@@ -187,18 +192,34 @@ def msd(x, y, frac):
         msd for the trajectory
 
     """
-    N = int(len(x) * frac)
-    msd = []
-    for lag in range(1, N):
-        msd.append(
-            np.mean(
-                [
-                    SquareDist(x[j], x[j + lag], y[j], y[j + lag])
-                    for j in range(len(x) - lag)
-                ]
-            )
-        )
-    return np.array(msd)
+    N = len(x)
+    assert N-3 > 0
+    col_Array  = np.zeros(N-3)
+    col_t_Array  = np.zeros(N-3)
+    data_tmp = np.column_stack((x, y))
+    data_t_tmp = t
+
+    msd_dict = defaultdict(lambda: [])
+
+    delta = np.min(np.diff(t)) if dt is None else dt
+
+    for i in range(1,N-2):
+        calc_tmp = np.sum(np.abs((data_tmp[1+i:N,:] - data_tmp[1:N - i,:]) ** 2), axis=1)
+        calc_t_tmp = data_t_tmp[1+i:N] - data_t_tmp[1:N - i]
+
+        for interval, square_displacement in zip(calc_t_tmp, calc_tmp):
+            msd_dict[int(interval/delta)].append(square_displacement)
+
+        col_Array[i-1] = np.mean(calc_tmp)
+        col_t_Array[i-1] = i * delta
+
+    for i in msd_dict:
+        msd_dict[i] = np.mean(msd_dict[i])
+
+    aux = np.array(sorted(list(zip(list(msd_dict.keys()), list(msd_dict.values()))), key=lambda x: x[0]))
+    t_vec, msd = (aux[:,0] * delta) + delta, aux[:,1]
+
+    return msd[:int(N*frac)]
 
 
 # def Scalings(msds, dt):
@@ -509,7 +530,7 @@ def GetStates(SL, model):
     return newstates, model
 
 
-def GetFeatures(x, y, SL, model):
+def GetFeatures(x, y, t, SL, dt, model):
     """Compute the diffusional fingerprint for a trajectory.
 
     Parameters
@@ -529,7 +550,7 @@ def GetFeatures(x, y, SL, model):
         The features describing the diffusional fingerprint
 
     """
-    out = msd(x, y, 0.5)
+    out = msd(x, y, t, dt, 0.5)
     maxpair = GetMax(x, y)
     #beta, alpha, pval = Scalings(out, dt)
     states, model = GetStates(SL, model)
@@ -573,5 +594,5 @@ def ThirdAppender(d, model):
     ndarray or str
         Returns the features describing the diffusional fingerprint
     """
-    x, y, SL = d
-    return GetFeatures(x, y, SL, model)
+    x, y, t, SL, dt = d
+    return GetFeatures(x, y, t, SL, dt, model)

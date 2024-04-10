@@ -36,51 +36,52 @@ from tqdm import tqdm
 import pandas as pd
 
 if __name__ == '__main__':
-
+    DATASET_PATH = './BTX680R_CholesterolPEGKK114.csv'
+    DATASETS_LABELS = DATASET_PATH.split('/')[1].split('.')[0].split('_')
+    FILE_LABEL = f"{DATASETS_LABELS[0]}_{DATASETS_LABELS[1]}"
+    dt = 0.001
     """Generate a data set to compute fingerprints for """
-    if not os.path.isfile("X.pkl") or not os.path.isfile("y.pkl"):
-        DATASET_PATH = './BTX680R_CholesterolPEGKK114.csv'
+    if not os.path.isfile(f"{FILE_LABEL}_X.pkl") or not os.path.isfile(f"{FILE_LABEL}_y.pkl"):
         table = pd.read_csv(DATASET_PATH)
-
-        dataset_labels = DATASET_PATH.split('/')[1].split('.')[0].split('_')
         
         trajectories_by_label = {}
-        for label in dataset_labels:
+        for label in DATASETS_LABELS:
             trajectories_by_label[label] = []
 
         for id in tqdm(table['id'].unique()):
             trajectory_df = table[table['id'] == id].sort_values('t')
-            new_array = np.zeros((len(trajectory_df), 2))
+            new_array = np.zeros((len(trajectory_df), 3))
             new_array[:,0] = trajectory_df['x']
             new_array[:,1] = trajectory_df['y']
+            new_array[:,2] = trajectory_df['t']
             trajectories_by_label[trajectory_df['label'].values[0]].append(new_array)
 
         outdat, labels = [], []
-        for label_index, label in enumerate(dataset_labels):
+        for label_index, label in enumerate(DATASETS_LABELS):
             outdat += trajectories_by_label[label]
             labels += len(trajectories_by_label[label]) * [label_index]
 
-        with open("X.pkl", "wb") as f:
+        with open(f"{FILE_LABEL}_X.pkl", "wb") as f:
             pickle.dump(outdat, f)
-        with open("y.pkl", "wb") as f:
+        with open(f"{FILE_LABEL}_y.pkl", "wb") as f:
             pickle.dump(labels, f)
 
 
     """Compute fingerprints"""
-    if not os.path.isfile("X_fingerprints.npy"):
+    if not os.path.isfile(f"{FILE_LABEL}_X_fingerprints.npy"):
         import pickle
 
         print("Generating fingerprints")
-        with open("X.pkl", "rb") as f:
+        with open(f"{FILE_LABEL}_X.pkl", "rb") as f:
             traces = pickle.load(f)
-        if not os.path.isfile("HMMjson"):
+        if not os.path.isfile(f"{FILE_LABEL}_HMMjson"):
             steplength = []
             for t in traces:
                 x, y = t[:, 0], t[:, 1]
                 steplength.append(np.sqrt((x[1:] - x[:-1]) ** 2 + (y[1:] - y[:-1]) ** 2))
             print("fitting HMM")
             model = HiddenMarkovModel.from_samples(
-                NormalDistribution, n_components=4, X=steplength, n_jobs=3, verbose=True
+                NormalDistribution, n_components=4, X=steplength, n_jobs=8, verbose=True, stop_threshold=0.001
             )
             #
             print(model)
@@ -88,12 +89,12 @@ if __name__ == '__main__':
             print("Saving HMM model")
 
             s = model.to_json()
-            f = open("HMMjson", "w")
+            f = open(f"{FILE_LABEL}_HMMjson", "w")
             f.write(s)
             f.close()
         else:
             print("loading HMM model")
-            s = "HMMjson"
+            s = f"{FILE_LABEL}_HMMjson"
             file = open(s, "r")
             json_s = ""
             for line in file:
@@ -104,24 +105,22 @@ if __name__ == '__main__':
         for t in traces:
             x, y = t[:, 0], t[:, 1]
             SL = np.sqrt((x[1:] - x[:-1]) ** 2 + (y[1:] - y[:-1]) ** 2)
-            d.append((x, y, SL))
+            d.append((x, y, t[:, 2], SL, dt))
 
         #p = mp.Pool(mp.cpu_count())
         print("Computing fingerprints")
         print(f"Running {len(traces)} traces")
         #func = partial(ThirdAppender, model=model)  #
-
         train_result = []
         for t in tqdm(d):
             train_result.append(ThirdAppender(t, model=model)) 
-
-        np.save("X_fingerprints", train_result)
+        np.save(f"{FILE_LABEL}_X_fingerprints", train_result)
 
     """Train classifiers to obtain insights"""
-    Xdat = np.load("X_fingerprints.npy")
-    with open("y.pkl", "rb") as f:
+    Xdat = np.load(f"{FILE_LABEL}_X_fingerprints.npy")
+    with open(f"{FILE_LABEL}_y.pkl", "rb") as f:
         ydat = pickle.load(f)
-    conv_dict = dict(zip(range(4), ["ND", "DM", "CD", "AD"]))
+    conv_dict = dict(zip(range(len(DATASETS_LABELS)), DATASETS_LABELS))
     ydat = np.array([conv_dict[i] for i in ydat])
     learn = ML(Xdat, ydat)
     learn.Train(algorithm="Logistic")
@@ -135,7 +134,7 @@ if __name__ == '__main__':
 
     xnames = learn.to_string
     ynames = learn.to_string
-    fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+    fig, ax = plt.subplots(1, 1, figsize=(len(DATASETS_LABELS), len(DATASETS_LABELS)))
     ax.matshow(m, cmap="Blues")
     for i in range(m.shape[0]):
         for j in range(m.shape[0]):
@@ -144,11 +143,11 @@ if __name__ == '__main__':
             else:
                 ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
     ax.set(
-        yticks=range(4),
-        xticks=range(4),
+        yticks=range(len(DATASETS_LABELS)),
+        xticks=range(len(DATASETS_LABELS)),
         # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
-        xticklabels=[xnames[i] for i in range(4)][::-1],
-        yticklabels=[ynames[i] for i in range(4)][::-1],
+        xticklabels=[xnames[i] for i in range(len(DATASETS_LABELS))][::-1],
+        yticklabels=[ynames[i] for i in range(len(DATASETS_LABELS))][::-1],
         xlabel="Predicted label",
         ylabel="True label",
     )
@@ -157,7 +156,7 @@ if __name__ == '__main__':
     fig.tight_layout()
     fig.savefig("Confusion_matrix")
     print("Computing LDA projection 3D bubbles")
-    learn.Reduce(n_components=3, method="lin")
+    learn.Reduce(n_components=len(DATASETS_LABELS)-1, method="lin")
 
     MLfig = plt.figure(figsize=(6, 6))
     MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
@@ -192,9 +191,9 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
     for i, l, c in zip(
-        range(4),
-        ["ND", "DM", "CD", "AD"],
-        ["darkred", "dimgrey", "darkorange", "darkgreen"],
+        range(len(DATASETS_LABELS)),
+        DATASETS_LABELS,
+        ["darkred", "dimgrey", "darkorange", "darkgreen"][:len(DATASETS_LABELS)],
     ):
         print(c)
         center, count, sy = histogram(
@@ -216,8 +215,8 @@ if __name__ == '__main__':
     print("Computing ranked feature-plot between normal and directed motion")
 
     Xdat_new, ydat_new = (
-        Xdat[(ydat == "CD") | (ydat == "DM")],
-        ydat[(ydat == "CD") | (ydat == "DM")],
+        Xdat[(ydat == DATASETS_LABELS[0]) | (ydat == DATASETS_LABELS[1])],
+        ydat[(ydat == DATASETS_LABELS[0]) | (ydat == DATASETS_LABELS[1])],
     )
 
     learn = ML(Xdat_new, ydat_new)
@@ -229,7 +228,7 @@ if __name__ == '__main__':
         Line2D([0], [0], color="darkred", lw=4),
         Line2D([0], [0], color="dimgrey", lw=4),
     ]
-    plt.legend(custom_lines, ["Confined diffusion", "Directed motion"], loc="upper center")
+    plt.legend(custom_lines, DATASETS_LABELS, loc="upper center")
     plt.tight_layout()
     plt.savefig("Feature_ranking")
 
