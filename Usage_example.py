@@ -20,7 +20,7 @@ from RandomWalkSims import (
 )
 import matplotlib.pyplot as plt
 import matplotlib
-from Fingerprint_feat_gen import ThirdAppender
+from traj_fingerprint.Features.Fingerprint_feat_gen import ThirdAppender
 from MLGeneral import ML, histogram
 import pickle
 import os
