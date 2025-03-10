@@ -959,3 +959,12 @@ class Trajectory(Document):
             info=self.info,
             noisy=True
         )
+
+    def displacements(self):
+        """
+        From
+        https://github.com/hatzakislab/Diffusional-Fingerprinting/blob/095913e00c2f11b387626fb5622a911001055762/Usage_example.py#L109
+        """
+        x,y = self.get_noisy_x(), self.get_noisy_y()
+        SL = np.sqrt((x[1:] - x[:-1]) ** 2 + (y[1:] - y[:-1]) ** 2)
+        return SL
