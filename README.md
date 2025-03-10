@@ -22,5 +22,5 @@ The example also contains a few plotting capabilities, showcasing how one could 
 The other files in the repository are non-vital files which increase the convenience in running the example and using the libraries. 
 The files `HMMjson`, `X_fingerprints.npy`, `X.pkl`, and `y.pkl` are pre-computed fingerprints, a pre-trained HMM model, and pre-simulated data which reduce the runtime of the example. 
 If the user wish to generate their own data, any of these files may be deleted in which case the `Usage_example.py` will generate new instances of these files upon runtime.
-The repository also contains a `requirements.txt` showcasing a dependency setup in which the code ran. 
+The repository also contains a `requirements.txt` showcasing a dependency setup in which the code ran. Also, there is an env file to install the environment require to run the code.
 It is expected that other versions for the required dependencies would work, but for example a 2.x version of iminuit is required over a 1.x version which will not run. 
