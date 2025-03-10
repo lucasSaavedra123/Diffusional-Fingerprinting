@@ -39,7 +39,7 @@ if __name__ == '__main__':
     dt = 1 / 30  # s 
 
     """Generate a data set to compute fingerprints for """
-    if not os.path.isfile("X.pkl") and os.path.isfile("y.pkl"):
+    if not os.path.isfile("X.pkl") and not os.path.isfile("y.pkl"):
         n_per_diff = 200
 
         D = 9.02  # µm^2/s
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         print("\tnormal done")
         directed_diff = Gen_directed_diff(D, dt, vs, sigmaDM, NsDM)
         print("\tdirected done")
-        confined_diff = Gen_confined_diff(D, dt, r_cs, sigmaCD, NsCD)
+        confined_diff = Gen_confined_diff(D, dt, r_cs, sigmaCD, NsCD, multiprocess=False)
         print("\tconfined done")
         anomalous_diff = Gen_anomalous_diff(D, dt, alphas, sigmaAD, NsAD)
         print("\tanomalous done")
