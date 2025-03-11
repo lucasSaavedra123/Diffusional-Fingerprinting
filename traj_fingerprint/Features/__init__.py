@@ -36,4 +36,4 @@ def get_trajectory_fingerprint(traj):
     fingerprint = []
     for feature in FEATURES:
         fingerprint.extend(feature.calculate(traj))
-    return np.array(fingerprint)
+    return fingerprint
