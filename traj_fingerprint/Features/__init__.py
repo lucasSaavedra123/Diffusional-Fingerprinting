@@ -30,13 +30,13 @@ features = Feature.__subclasses__()
 features.remove(Lifetime)
 features.remove(TimeInEachState)
 
-IMPLEMENTED_FEATURES = [feature() for feature in features]
-IMPLEMENTED_FEATURES.append(Lifetime(hmm_model))
-IMPLEMENTED_FEATURES.append(TimeInEachState(hmm_model))
-IMPLEMENTED_FEATURES = tuple(IMPLEMENTED_FEATURES)
+FEATURES = [feature() for feature in features]
+FEATURES.append(Lifetime(hmm_model))
+FEATURES.append(TimeInEachState(hmm_model))
+FEATURES = tuple(FEATURES)
 
 def get_trajectory_fingerprint(traj):
     fingerprint = []
-    for feature in IMPLEMENTED_FEATURES:
+    for feature in FEATURES:
         fingerprint.extend(feature.calculate(traj))
     return np.array(fingerprint)
