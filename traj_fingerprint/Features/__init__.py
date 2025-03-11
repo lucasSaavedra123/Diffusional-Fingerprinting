@@ -17,14 +17,11 @@ from .TrajectoryLength import TrajectoryLength
 from .MeanDisplacements import MeanDisplacements
 from .MeanMSD import MeanMSD
 
-print("Loading HMM model...")
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
 json_s = ""
 for line in file:
     json_s += line
 hmm_model = HiddenMarkovModel.from_json(json_s)
-print("Loaded model:")
-print(hmm_model)
 
 features = Feature.__subclasses__()
 features.remove(Lifetime)
