@@ -4,18 +4,18 @@ from pomegranate import *
 import numpy as np
 
 from .Feature import Feature
-from .MSDRatio import MSDRatio
-from .FractalDimension import FractalDimension
+from .MSDAnalysis import MSDAnalysis
 from .Efficiency import Efficiency
+from .FractalDimension import FractalDimension
 from .Gaussianity import Gaussianity
 from .Kurtosis import Kurtosis
+from .MSDRatio import MSDRatio
 from .Trappedness import Trappedness
+from .TimeInEachState import TimeInEachState
+from .Lifetime import Lifetime
+from .TrajectoryLength import TrajectoryLength
 from .MeanDisplacements import MeanDisplacements
 from .MeanMSD import MeanMSD
-from .TrajectoryLength import TrajectoryLength
-from .MSDAnalysis import MSDAnalysis
-from .Lifetime import Lifetime
-from .TimeInEachState import TimeInEachState
 
 print("Loading HMM model...")
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
