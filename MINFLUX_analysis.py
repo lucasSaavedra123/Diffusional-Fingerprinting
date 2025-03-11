@@ -38,6 +38,7 @@ from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint
 from multiprocessing import Pool
 import time
+import itertools
 
 def pool_get_trajectory_fingerprint(traj):
     try:
@@ -68,33 +69,37 @@ def calculate_msd_parameters(traj):
     traj.info['precision'] = precision
     traj.info['goodness_of_fit'] = goodness_of_fit
 
+def cache_msd_info(traces):
+    for trace in traces.copy():
+        try:
+            calculate_msd_parameters(trace)
+        except AssertionError:
+            traces.remove(trace)
+    return traces
+
 if __name__ == "__main__":
+    colors = {
+        'BTX680R':'darkred',
+        'BTX680R(+fPEG-Chol)':'dimgrey'
+    }
+
     """Compute fingerprints"""
     if not os.path.isfile("X_fingerprints.npy"):
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
-        btx_traces = list(Trajectory.objects(info__dataset='BTX680R'))[:50]
-        btx_with_chol_traces = list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'))[:50]
+        traces = {
+            'BTX680R':list(Trajectory.objects(info__dataset='BTX680R'))[:50],
+            'BTX680R(+fPEG-Chol)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'))[:50]
+        }
         DatabaseHandler.disconnect()
 
         fingerprints = []
         labels = []
 
-        for trace in btx_traces.copy():
-            try:
-                calculate_msd_parameters(trace)
-                labels.append(0)
-            except AssertionError:
-                btx_traces.remove(trace)
+        for key_trace in traces:
+            traces[key_trace] = cache_msd_info(traces[key_trace])
 
-        for trace in btx_with_chol_traces.copy():
-            try:
-                calculate_msd_parameters(trace)
-            except AssertionError:
-                btx_with_chol_traces.remove(trace)
-                labels.append(1)
-
-        traces = btx_traces + btx_with_chol_traces
-
+        labels = list(itertools.chain.from_iterable([len(traces[key_trace]) * [label] for label, key_trace in enumerate(traces)]))
+        traces = list(itertools.chain.from_iterable([traces[key_trace] for key_trace in traces]))
         print("Computing fingerprints and labels")
         print(f"Running {len(traces)} traces")
 
