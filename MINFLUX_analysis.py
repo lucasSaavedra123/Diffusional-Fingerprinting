@@ -78,28 +78,41 @@ def cache_msd_info(traces):
     return traces
 
 if __name__ == "__main__":
+    categories = ['BTX680R', 'fPEG-Chol', 'BTX680R(+fPEG-Chol)', 'fPEG-Chol(+BTX680R)']
     category_to_colors = {
         'BTX680R':'darkred',
-        'BTX680R(+fPEG-Chol)':'dimgrey'
+        'fPEG-Chol':'dimgrey',
+        'BTX680R(+fPEG-Chol)':'darkorange',
+        'fPEG-Chol(+BTX680R)':'darkgreen'
     }
 
-    """Compute fingerprints"""
-    if not os.path.isfile("X_fingerprints.npy"):
+    """Load and save traces"""
+    if not os.path.isfile("traces.pkl"):
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
         traces = {
             'BTX680R':list(Trajectory.objects(info__dataset='BTX680R'))[:50],
-            'BTX680R(+fPEG-Chol)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'))[:50]
+            'fPEG-Chol':list(Trajectory.objects(info__dataset='CholesterolPEGKK114'))[:50],
+            'BTX680R(+fPEG-Chol)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'))[:50],
+            'fPEG-Chol(+BTX680R)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='fPEG-Chol'))[:50],
         }
         DatabaseHandler.disconnect()
-
-        fingerprints = []
-        labels = []
 
         for key_trace in traces:
             traces[key_trace] = cache_msd_info(traces[key_trace])
 
-        labels = list(itertools.chain.from_iterable([len(traces[key_trace]) * [label] for label, key_trace in enumerate(traces)]))
-        traces = list(itertools.chain.from_iterable([traces[key_trace] for key_trace in traces]))
+        with open("traces.pkl", "wb") as f:
+            pickle.dump(traces, f)
+
+    """Compute fingerprints"""
+    if not os.path.isfile("X_fingerprints.npy"):
+        with open("traces.pkl", "rb") as f:
+            traces = pickle.load(f)
+
+        fingerprints = []
+        labels = []
+
+        labels = list(itertools.chain.from_iterable([len(traces[key_trace]) * [label] for label, key_trace in enumerate(categories)]))
+        traces = list(itertools.chain.from_iterable([traces[key_trace] for key_trace in categories]))
         print("Computing fingerprints and labels")
         print(f"Running {len(traces)} traces")
 
@@ -118,7 +131,7 @@ if __name__ == "__main__":
     """Train classifiers to obtain insights"""
     Xdat = np.load("X_fingerprints.npy")
     ydat = np.load("y.npy")
-    conv_dict = dict(zip(range(len(category_to_colors)), list(category_to_colors.keys())))
+    conv_dict = dict(zip(range(len(categories)), list(categories)))
     ydat = np.array([conv_dict[i] for i in ydat])
     learn = ML(Xdat, ydat)
     learn.Train(algorithm="Logistic")
@@ -141,11 +154,11 @@ if __name__ == "__main__":
             else:
                 ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
     ax.set(
-        yticks=range(len(category_to_colors)),
-        xticks=range(len(category_to_colors)),
+        yticks=range(len(categories)),
+        xticks=range(len(categories)),
         # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
-        xticklabels=[xnames[i] for i in range(len(category_to_colors))][::-1],
-        yticklabels=[ynames[i] for i in range(len(category_to_colors))][::-1],
+        xticklabels=[xnames[i] for i in range(len(categories))][::-1],
+        yticklabels=[ynames[i] for i in range(len(categories))][::-1],
         xlabel="Predicted label",
         ylabel="True label",
     )
@@ -154,17 +167,17 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.savefig("Confusion_matrix")
     print("Computing LDA projection 3D bubbles")
-    learn.Reduce(n_components=1, method="lin")
+    learn.Reduce(n_components=3, method="lin")
 
     MLfig = plt.figure(figsize=(6, 6))
     MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
-    learn.ProjectPlot(axis=MLax, colors=[category_to_colors[category] for category in category_to_colors])
+    learn.ProjectPlot(axis=MLax, colors=[category_to_colors[category] for category in categories])
     MLfig.tight_layout()
     MLfig.savefig("3Dbubbles_fingerprints", dpi=500)
 
     print("Plotting LDA projection 1D")
 
-    colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in category_to_colors]
+    colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in categories]
     cbins = 4  # Discretizes the interpolation into bins
     cmap_name = "my_list"
     cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
@@ -184,9 +197,9 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
     for i, l, c in zip(
-        range(len(category_to_colors)),
-        list(category_to_colors.keys()),
-        [category_to_colors[category] for category in category_to_colors],
+        range(len(categories)),
+        list(categories),
+        [category_to_colors[category] for category in categories],
     ):
         print(c)
         center, count, sy = histogram(
