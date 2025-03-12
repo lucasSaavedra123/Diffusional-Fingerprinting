@@ -88,6 +88,7 @@ if __name__ == "__main__":
 
     """Load and save traces"""
     if not os.path.isfile("traces.pkl"):
+        print("Loading and saving traces")
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
         traces = {
             'BTX680R':list(Trajectory.objects(info__dataset='BTX680R'))[:50],
