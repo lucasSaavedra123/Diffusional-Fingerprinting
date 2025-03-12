@@ -154,7 +154,7 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.savefig("Confusion_matrix")
     print("Computing LDA projection 3D bubbles")
-    learn.Reduce(n_components=3, method="lin")
+    learn.Reduce(n_components=1, method="lin")
 
     MLfig = plt.figure(figsize=(6, 6))
     MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     for i, l, c in zip(
         range(len(category_to_colors)),
         list(category_to_colors.keys()),
-        [colors[category] for category in category_to_colors],
+        [category_to_colors[category] for category in category_to_colors],
     ):
         print(c)
         center, count, sy = histogram(
