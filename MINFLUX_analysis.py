@@ -78,7 +78,7 @@ def cache_msd_info(traces):
     return traces
 
 if __name__ == "__main__":
-    colors = {
+    category_to_colors = {
         'BTX680R':'darkred',
         'BTX680R(+fPEG-Chol)':'dimgrey'
     }
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         With Pool, the process is 4.42 times faster.
         """
         with Pool() as pool, tqdm(total=len(traces)) as pbar:
-            for result in pool.imap(pool_get_trajectory_fingerprint, traces):
+            for result in pool.imap(get_trajectory_fingerprint, traces):
                 fingerprints.append(result)
                 pbar.update()
                 pbar.refresh()
@@ -117,9 +117,8 @@ if __name__ == "__main__":
 
     """Train classifiers to obtain insights"""
     Xdat = np.load("X_fingerprints.npy")
-    with open("y.pkl", "rb") as f:
-        ydat = pickle.load(f)
-    conv_dict = dict(zip(range(4), ["ND", "DM", "CD", "AD"]))
+    ydat = np.load("y.npy")
+    conv_dict = dict(zip(range(len(category_to_colors)), list(category_to_colors.keys())))
     ydat = np.array([conv_dict[i] for i in ydat])
     learn = ML(Xdat, ydat)
     learn.Train(algorithm="Logistic")
@@ -142,11 +141,11 @@ if __name__ == "__main__":
             else:
                 ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
     ax.set(
-        yticks=range(4),
-        xticks=range(4),
+        yticks=range(len(category_to_colors)),
+        xticks=range(len(category_to_colors)),
         # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
-        xticklabels=[xnames[i] for i in range(4)][::-1],
-        yticklabels=[ynames[i] for i in range(4)][::-1],
+        xticklabels=[xnames[i] for i in range(len(category_to_colors))][::-1],
+        yticklabels=[ynames[i] for i in range(len(category_to_colors))][::-1],
         xlabel="Predicted label",
         ylabel="True label",
     )
@@ -159,18 +158,13 @@ if __name__ == "__main__":
 
     MLfig = plt.figure(figsize=(6, 6))
     MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
-    learn.ProjectPlot(axis=MLax, colors=["darkred", "dimgrey", "darkorange", "darkgreen"])
+    learn.ProjectPlot(axis=MLax, colors=[category_to_colors[category] for category in category_to_colors])
     MLfig.tight_layout()
     MLfig.savefig("3Dbubbles_fingerprints", dpi=500)
 
     print("Plotting LDA projection 1D")
 
-    colors = [
-        matplotlib.colors.to_rgb("darkred"),
-        matplotlib.colors.to_rgb("dimgrey"),
-        matplotlib.colors.to_rgb("darkorange"),
-        matplotlib.colors.to_rgb("darkgreen"),
-    ]  # R -> G -> B
+    colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in category_to_colors]
     cbins = 4  # Discretizes the interpolation into bins
     cmap_name = "my_list"
     cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
@@ -190,9 +184,9 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
     for i, l, c in zip(
-        range(4),
-        ["ND", "DM", "CD", "AD"],
-        ["darkred", "dimgrey", "darkorange", "darkgreen"],
+        range(len(category_to_colors)),
+        list(category_to_colors.keys()),
+        [colors[category] for category in category_to_colors],
     ):
         print(c)
         center, count, sy = histogram(

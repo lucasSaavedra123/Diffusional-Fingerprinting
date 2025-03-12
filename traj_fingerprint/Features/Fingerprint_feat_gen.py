@@ -358,7 +358,7 @@ def Gaussianity(x, y, r2):
             [QuadDist(x[j], x[j + lag], y[j], y[j + lag]) for j in range(len(x) - lag)]
         )
         gn.append(r4 / (2 * r2[lag] ** 2))
-    return np.mean(gn)
+    return np.nanmean(gn) #Check why this returns NaN with np.mean
 
 
 def Kurtosis(x, y):
