@@ -91,10 +91,10 @@ if __name__ == "__main__":
         print("Loading and saving traces")
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
         traces = {
-            'BTX680R':list(Trajectory.objects(info__dataset='BTX680R'))[:50],
-            'fPEG-Chol':list(Trajectory.objects(info__dataset='CholesterolPEGKK114'))[:50],
-            'BTX680R(+fPEG-Chol)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'))[:50],
-            'fPEG-Chol(+BTX680R)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='fPEG-Chol'))[:50],
+            'BTX680R':list(Trajectory.objects(info__dataset='BTX680R')),
+            'fPEG-Chol':list(Trajectory.objects(info__dataset='CholesterolPEGKK114')),
+            'BTX680R(+fPEG-Chol)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R')),
+            'fPEG-Chol(+BTX680R)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='fPEG-Chol')),
         }
         DatabaseHandler.disconnect()
 
