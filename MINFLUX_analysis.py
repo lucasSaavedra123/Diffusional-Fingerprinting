@@ -86,45 +86,32 @@ if __name__ == "__main__":
         'fPEG-Chol(+BTX680R)':'darkgreen'
     }
 
-    """Load and save traces"""
-    if not os.path.isfile("traces.pkl"):
-        print("Loading and saving traces")
-        DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
-        traces = {
-            'BTX680R':list(Trajectory.objects(info__dataset='BTX680R')),
-            'fPEG-Chol':list(Trajectory.objects(info__dataset='CholesterolPEGKK114')),
-            'BTX680R(+fPEG-Chol)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R')),
-            'fPEG-Chol(+BTX680R)':list(Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='fPEG-Chol')),
-        }
-        DatabaseHandler.disconnect()
-
-        for key_trace in traces:
-            traces[key_trace] = cache_msd_info(traces[key_trace])
-
-        with open("traces.pkl", "wb") as f:
-            pickle.dump(traces, f)
-
     """Compute fingerprints"""
     if not os.path.isfile("X_fingerprints.npy"):
-        with open("traces.pkl", "rb") as f:
-            traces = pickle.load(f)
+        DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+
+        traces = {
+            'BTX680R':Trajectory.objects(info__dataset='BTX680R'),
+            'fPEG-Chol':Trajectory.objects(info__dataset='CholesterolPEGKK114'),
+            'BTX680R(+fPEG-Chol)':Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'),
+            'fPEG-Chol(+BTX680R)':Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='fPEG-Chol'),
+        }
+
+        print("Computing fingerprints and labels")
 
         fingerprints = []
         labels = []
 
-        labels = list(itertools.chain.from_iterable([len(traces[key_trace]) * [label] for label, key_trace in enumerate(categories)]))
-        traces = list(itertools.chain.from_iterable([traces[key_trace] for key_trace in categories]))
-        print("Computing fingerprints and labels")
-        print(f"Running {len(traces)} traces")
+        for category_id, category in enumerate(categories):
+            for trace in tqdm(traces[category]):
+                try:
+                    calculate_msd_parameters(trace)
+                    fingerprints.append(get_trajectory_fingerprint(trace))
+                    labels.append(category_id)
+                except AssertionError:
+                    pass
 
-        """
-        With Pool, the process is 4.42 times faster.
-        """
-        with Pool() as pool, tqdm(total=len(traces)) as pbar:
-            for result in pool.imap(get_trajectory_fingerprint, traces):
-                fingerprints.append(result)
-                pbar.update()
-                pbar.refresh()
+        DatabaseHandler.disconnect()
 
         np.save("X_fingerprints", np.array(fingerprints))
         np.save("y", np.array(labels))
