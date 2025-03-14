@@ -205,7 +205,7 @@ if __name__ == "__main__":
             legend=l,
         )
     fig.savefig("Lindisc.pdf")
-
+    exit()
     print("Computing ranked feature-plot between normal and directed motion")
 
     Xdat_new, ydat_new = (
