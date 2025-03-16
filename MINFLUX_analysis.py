@@ -91,8 +91,7 @@ if __name__ == "__main__":
         labels = []
 
         for category_id, category in enumerate(categories):
-            query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint':1})[:250]
-
+            query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint':1})
             for fingerprint in tqdm(query_fingerprints):
                 if 'fingerprint' in fingerprint['info']:
                     fingerprints.append(fingerprint['info']['fingerprint'])
