@@ -11,21 +11,13 @@ outlining how insights mentioned in the paper may be obtained in code.
 
 Henrik Dahl Pinholt
 """
-from RandomWalkSims import (
-    Gen_normal_diff,
-    Gen_directed_diff,
-    Get_params,
-    Gen_confined_diff,
-    Gen_anomalous_diff,
-)
+
 import matplotlib.pyplot as plt
 import matplotlib
 from traj_fingerprint.Features.Fingerprint_feat_gen import ThirdAppender
 from MLGeneral import ML, histogram
-import pickle
 import os
 from pomegranate import *
-from functools import partial
 import numpy as np
 # import multiprocess as mp
 from sklearn.metrics import confusion_matrix
@@ -37,8 +29,6 @@ from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint
 from multiprocessing import Pool
-import time
-import itertools
 
 def pool_get_trajectory_fingerprint(traj):
     try:
@@ -86,30 +76,27 @@ if __name__ == "__main__":
         'fPEG-Chol(+BTX680R)':'darkgreen'
     }
 
-    """Compute fingerprints"""
+    """Get fingerprints"""
     if not os.path.isfile("X_fingerprints.npy"):
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
-        traces = {
-            'BTX680R':Trajectory.objects(info__dataset='BTX680R'),
-            'fPEG-Chol':Trajectory.objects(info__dataset='CholesterolPEGKK114'),
-            'BTX680R(+fPEG-Chol)':Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='BTX680R'),
-            'fPEG-Chol(+BTX680R)':Trajectory.objects(info__dataset='Cholesterol and btx', info__classified_experimental_condition='fPEG-Chol'),
+        queries = {
+            'BTX680R':{'info.dataset':'BTX680R'},
+            'fPEG-Chol':{'info.dataset':'CholesterolPEGKK114'},
+            'BTX680R(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+            'fPEG-Chol(+BTX680R)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
         }
-
-        print("Computing fingerprints and labels")
 
         fingerprints = []
         labels = []
 
         for category_id, category in enumerate(categories):
-            for trace in tqdm(traces[category]):
-                try:
-                    calculate_msd_parameters(trace)
-                    fingerprints.append(get_trajectory_fingerprint(trace))
+            query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint':1})[:250]
+
+            for fingerprint in tqdm(query_fingerprints):
+                if 'fingerprint' in fingerprint['info']:
+                    fingerprints.append(fingerprint['info']['fingerprint'])
                     labels.append(category_id)
-                except AssertionError:
-                    pass
 
         DatabaseHandler.disconnect()
 
