@@ -80,9 +80,4 @@ if __name__ == "__main__":
 
     pool = multiprocessing.Pool(processes=8)
     pool.map(calculate_and_save_fingerprint_for_id, list(enumerate(uploaded_trajectories_ids)))
-    """
-    with multiprocessing.Pool() as pool:
-        for _ in pool.imap(calculate_and_save_fingerprint_for_id, list(enumerate(uploaded_trajectories_ids))):
-            pbar.update()
-            pbar.refresh()
-    """
+    pool.close()
