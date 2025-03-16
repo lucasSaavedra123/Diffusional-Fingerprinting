@@ -77,7 +77,7 @@ if __name__ == "__main__":
     }
 
     """Get fingerprints"""
-    if not os.path.isfile("X_fingerprints.npy"):
+    if not os.path.isfile("X_fingerprints_MINFLUX.npy"):
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
         queries = {
@@ -99,12 +99,12 @@ if __name__ == "__main__":
 
         DatabaseHandler.disconnect()
 
-        np.save("X_fingerprints", np.array(fingerprints))
-        np.save("y", np.array(labels))
+        np.save("X_fingerprints_MINFLUX", np.array(fingerprints))
+        np.save("y_MINFLUX", np.array(labels))
 
     """Train classifiers to obtain insights"""
-    Xdat = np.load("X_fingerprints.npy")
-    ydat = np.load("y.npy")
+    Xdat = np.load("MINFLUX.npy")
+    ydat = np.load("y_MINFLUX.npy")
     conv_dict = dict(zip(range(len(categories)), list(categories)))
     ydat = np.array([conv_dict[i] for i in ydat])
     learn = ML(Xdat, ydat)
