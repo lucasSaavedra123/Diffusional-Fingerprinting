@@ -1,50 +1,13 @@
-# %%
-"""
-This script shows how functions in this folder may be utilized to compute diffusional
-fingerprints and analyze results. The first part simulates four types of
-random motion with the functions in RandomWalkSims.py.
-The second part then computes the diffusional fingerprints using functions in
-Fingerprint_feat_gen.py. (Fitting the HMM model may take some time, and a pre-fitted
-model is therefore included here to reduce the runtime of this example code).
-Finally, the last section plots some exemplary properties computed using the MLGeneral.py script,
-outlining how insights mentioned in the paper may be obtained in code.
+import multiprocessing
+import time
+import logging
 
-Henrik Dahl Pinholt
-"""
-from RandomWalkSims import (
-    Gen_normal_diff,
-    Gen_directed_diff,
-    Get_params,
-    Gen_confined_diff,
-    Gen_anomalous_diff,
-)
-import matplotlib.pyplot as plt
-import matplotlib
-from traj_fingerprint.Features.Fingerprint_feat_gen import ThirdAppender
-from MLGeneral import ML, histogram
-import pickle
-import os
-from pomegranate import *
-from functools import partial
-import numpy as np
-# import multiprocess as mp
-from sklearn.metrics import confusion_matrix
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn.model_selection import train_test_split
-from matplotlib.colors import LinearSegmentedColormap
 from tqdm import tqdm
+
 from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint
-from multiprocessing import Pool
-import time
-import itertools
 
-def pool_get_trajectory_fingerprint(traj):
-    try:
-        return get_trajectory_fingerprint(traj)
-    except AssertionError:
-        pass
 
 def calculate_msd_parameters(traj):
     DELTA_T = 0.000132
@@ -77,35 +40,49 @@ def cache_msd_info(traces):
             traces.remove(trace)
     return traces
 
-if __name__ == "__main__":
+def calculate_and_save_fingerprint_for_id(arguments):
+    worker_i, trace_id = arguments
+    logger = multiprocessing.get_logger()
+    start_time = time.time()
+    logger.info(f"Worker {worker_i}/{trace_id} started at {start_time}")
+
     DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+    trace = Trajectory.objects(id=trace_id)
+    assert len(trace) == 1
+    trace = trace[0]
+
+    if 'fingerprint' not in trace.info:
+        try:
+            calculate_msd_parameters(trace)
+            trace.info['fingerprint'] = get_trajectory_fingerprint(trace)
+            delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
+            for field in delete_fields:
+                del trace.info[field]
+            trace.save()
+        except AssertionError:
+            pass
+    DatabaseHandler.disconnect()
+
+    end_time = time.time()
+    logger.info(f"Worker {worker_i}/{trace_id} finished at {end_time} (Duration: {end_time - start_time:.2f} seconds)")
+
+if __name__ == "__main__":
     """
     With Pool, the process is 4.42 times faster. But perhaps is more inneficient
     with many trajectories.
     """
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(processName)s - %(levelname)s - %(message)s')
+    multiprocessing.log_to_stderr(logging.INFO)
+
+    DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+    uploaded_trajectories_ids = [str(trajectory_result['_id']) for trajectory_result in Trajectory._get_collection().find({}, {'_id':1})]
+    DatabaseHandler.disconnect()
+
+    pool = multiprocessing.Pool(processes=8)
+    pool.map(calculate_and_save_fingerprint_for_id, list(enumerate(uploaded_trajectories_ids)))
     """
-    with Pool() as pool, tqdm(total=len(traces)) as pbar:
-        for result in pool.imap(pool_get_trajectory_fingerprint, traces):
-            fingerprints.append(result)
+    with multiprocessing.Pool() as pool:
+        for _ in pool.imap(calculate_and_save_fingerprint_for_id, list(enumerate(uploaded_trajectories_ids))):
             pbar.update()
             pbar.refresh()
     """
-    uploaded_trajectories_ids = [str(trajectory_result['_id']) for trajectory_result in Trajectory._get_collection().find({}, {'_id':1})]
-
-    for trace_id in tqdm(uploaded_trajectories_ids):
-        trace = Trajectory.objects(id=trace_id)
-        assert len(trace) == 1
-        trace = trace[0]
-
-        if 'fingerprint' not in trace.info:
-            try:
-                calculate_msd_parameters(trace)
-                trace.info['fingerprint'] = get_trajectory_fingerprint(trace)
-                delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
-                for field in delete_fields:
-                    del trace.info[field]
-                trace.save()
-            except AssertionError:
-                pass
-
-    DatabaseHandler.disconnect()
