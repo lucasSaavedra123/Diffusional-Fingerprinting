@@ -154,9 +154,11 @@ def GetMax(x, y):
     """
     from itertools import combinations
     from random import randint
+    from scipy.spatial.distance import cdist
 
     A = np.array([x, y]).T
-
+    max_square_distance = (cdist(A,A)**2).max()
+    """
     def square_distance(x, y):
         return sum([(xi - yi) ** 2 for xi, yi in zip(x, y)])
 
@@ -165,6 +167,7 @@ def GetMax(x, y):
         if square_distance(*pair) > max_square_distance:
             max_square_distance = square_distance(*pair)
             max_pair = pair
+    """
     return max_square_distance
 
 
