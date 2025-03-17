@@ -73,7 +73,8 @@ if __name__ == "__main__":
         'BTX680R':'darkred',
         'fPEG-Chol':'dimgrey',
         'BTX680R(+fPEG-Chol)':'darkorange',
-        'fPEG-Chol(+BTX680R)':'darkgreen'
+        'fPEG-Chol(+BTX680R)':'darkgreen',
+        'BTX640R': 'purple'
     }
 
     """Get fingerprints"""
@@ -82,6 +83,7 @@ if __name__ == "__main__":
 
         queries = {
             'BTX680R':{'info.dataset':'BTX680R'},
+            'BTX640R':{'info.dataset':'Control'},
             'fPEG-Chol':{'info.dataset':'CholesterolPEGKK114'},
             'BTX680R(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
             'fPEG-Chol(+BTX680R)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
