@@ -18,6 +18,7 @@ from .MeanDisplacements import MeanDisplacements
 from .MeanMSD import MeanMSD
 from .Velocity import Velocity
 from .RadialDistances import RadialDistances
+from .RadiusOfGyration import RadiusOfGyration
 
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
