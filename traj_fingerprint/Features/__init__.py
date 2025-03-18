@@ -16,6 +16,8 @@ from .Lifetime import Lifetime
 from .TrajectoryLength import TrajectoryLength
 from .MeanDisplacements import MeanDisplacements
 from .MeanMSD import MeanMSD
+from .Velocity import Velocity
+
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
 json_s = ""
