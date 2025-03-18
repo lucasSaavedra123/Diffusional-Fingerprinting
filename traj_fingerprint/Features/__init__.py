@@ -17,6 +17,7 @@ from .TrajectoryLength import TrajectoryLength
 from .MeanDisplacements import MeanDisplacements
 from .MeanMSD import MeanMSD
 from .Velocity import Velocity
+from .RadialDistances import RadialDistances
 
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
