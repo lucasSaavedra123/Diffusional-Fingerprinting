@@ -837,7 +837,7 @@ class Trajectory(Document):
 
     def mean_turning_angle(self):
         """
-        This is meanDP in
+        This is meanDP in https://doi.org/10.21203/rs.3.rs-3716053/v1
 
         Deep learning assisted single particle tracking for
         automated correlation between diffusion and
@@ -854,7 +854,7 @@ class Trajectory(Document):
 
     def correlated_turning_angle(self):
         """
-        This is corrDP in
+        This is corrDP in https://doi.org/10.21203/rs.3.rs-3716053/v1
 
         Deep learning assisted single particle tracking for
         automated correlation between diffusion and
@@ -871,7 +871,7 @@ class Trajectory(Document):
 
     def directional_persistance(self):
         """
-        This is AvgSignDp in
+        This is AvgSignDp in https://doi.org/10.21203/rs.3.rs-3716053/v1
 
         Deep learning assisted single particle tracking for
         automated correlation between diffusion and
