@@ -10,8 +10,8 @@ class StraightnessIndex(Feature):
     """
     def calculate(self, trajectory):
         x,y = trajectory.get_noisy_x(), trajectory.get_noisy_y()
-        t = np.array([x,y]).T
         total_path_length = np.sum(trajectory.displacements())
-        end_to_start_distance = np.linalg.norm((t-t-1)[-1])
+        trajectory = np.array([x,y]).T
+        end_to_start_distance = np.linalg.norm((trajectory-trajectory[0])[-1])
         straightness_index = end_to_start_distance / total_path_length
         return [straightness_index]
