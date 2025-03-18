@@ -50,17 +50,15 @@ def calculate_and_save_fingerprint_for_id(arguments):
     trace = Trajectory.objects(id=trace_id)
     assert len(trace) == 1
     trace = trace[0]
-
-    if 'fingerprint' not in trace.info:
-        try:
-            calculate_msd_parameters(trace)
-            trace.info['fingerprint'] = get_trajectory_fingerprint(trace)
-            delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
-            for field in delete_fields:
-                del trace.info[field]
-            trace.save()
-        except AssertionError:
-            pass
+    try:
+        calculate_msd_parameters(trace)
+        trace.info['fingerprint'] = get_trajectory_fingerprint(trace)
+        delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
+        for field in delete_fields:
+            del trace.info[field]
+        trace.save()
+    except AssertionError:
+        pass
     DatabaseHandler.disconnect()
 
     end_time = time.time()
