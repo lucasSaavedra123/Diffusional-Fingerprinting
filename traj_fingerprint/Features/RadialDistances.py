@@ -10,5 +10,5 @@ class RadialDistances(Feature):
     def calculate(self, trajectory):
         x,y = trajectory.get_noisy_x(), trajectory.get_noisy_y()
         t = np.array([x,y]).T
-        radial_distances = np.linalg.norm(t-t[0])[1:]
+        radial_distances = np.linalg.norm(t-t[0], axis=1)[1:]
         return [np.mean(radial_distances), np.max(radial_distances), np.min(radial_distances), np.max(radial_distances)-np.min(radial_distances)]
