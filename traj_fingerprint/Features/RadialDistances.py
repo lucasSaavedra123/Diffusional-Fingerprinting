@@ -8,7 +8,6 @@ class RadialDistances(Feature):
     Obtained from https://doi.org/10.3390/receptors4010006
     """
     def calculate(self, trajectory):
-        x,y = trajectory.get_noisy_x(), trajectory.get_noisy_y()
-        trajectory = np.array([x,y]).T
+        trajectory = trajectory.raw_trajectory
         radial_distances = np.linalg.norm(trajectory-trajectory[0], axis=1)[1:]
         return [np.mean(radial_distances), np.max(radial_distances), np.min(radial_distances), np.max(radial_distances)-np.min(radial_distances)]
