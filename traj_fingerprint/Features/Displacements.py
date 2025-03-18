@@ -6,6 +6,7 @@ from .Feature import Feature
 class Displacements(Feature):
     """
     Obtained from https://doi.org/10.21203/rs.3.rs-3716053/v1
+    and (Pinholt, 2019).
     """
     def calculate(self, trajectory):
         displacements = trajectory.displacements()
