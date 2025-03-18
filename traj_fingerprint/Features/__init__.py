@@ -21,6 +21,7 @@ from .RadialDistances import RadialDistances
 from .RadiusOfGyration import RadiusOfGyration
 from .StraightnessIndex import StraightnessIndex
 from .Directionality import Directionality
+from .Area import Area
 
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
