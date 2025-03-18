@@ -299,6 +299,10 @@ class Trajectory(Document):
             return self.model_category
 
     @property
+    def raw_trajectory(self):
+        return np.array([self.get_noisy_x(), self.get_noisy_y()]).T
+
+    @property
     def centroid(self):
         return np.array([np.mean(self.get_noisy_x()), np.mean(self.get_noisy_y())])
 
