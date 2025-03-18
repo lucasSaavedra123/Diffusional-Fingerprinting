@@ -14,7 +14,7 @@ from .Trappedness import Trappedness
 from .TimeInEachState import TimeInEachState
 from .Lifetime import Lifetime
 from .TrajectoryLength import TrajectoryLength
-from .MeanDisplacements import MeanDisplacements
+from .Displacements import Displacements
 from .MeanMSD import MeanMSD
 from .Velocity import Velocity
 from .RadialDistances import RadialDistances
