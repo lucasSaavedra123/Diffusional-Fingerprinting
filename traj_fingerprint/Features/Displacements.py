@@ -13,9 +13,9 @@ class Displacements(Feature):
         displacements = trajectory.displacements()
         return [
             np.mean(displacements),
+            np.std(displacements),
             kurtosis(displacements),
             skew(displacements),
-            np.std(displacements),
             np.min(displacements),
             np.max(displacements),
             np.std(displacements)/np.mean(displacements)
