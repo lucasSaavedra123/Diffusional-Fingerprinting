@@ -17,8 +17,16 @@ class Directionality(Feature):
         tac = ((cos[1:] - cos[:-1])**2) + ((sin[1:] - sin[:-1])**2)
         tac = np.sum(tac) / trajectory.length
 
+        ratio_a = 1-(np.mean(cos)**2)-(np.mean(sin)**2)
+        ratio_b = ((1-np.mean(cos))**2)+(np.mean(sin)**2)
+        b = np.std(trajectory.displacements())/np.mean(trajectory.displacements())
+        ratio_d = (ratio_a/ratio_b) + (b**2)
+
+        sinuosity = 2*((np.mean(trajectory.displacements()) * ratio_d)**(-0.5))
+
         return [
             tac,
+            sinuosity,
             trajectory.mean_turning_angle(),
             trajectory.correlated_turning_angle(),
             trajectory.directional_persistance(),
