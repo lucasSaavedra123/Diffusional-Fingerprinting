@@ -9,8 +9,8 @@ class Directionality(Feature):
     and https://doi.org/10.1039/D3NA00188A
     """
     def calculate(self, trajectory):
-        angles = np.deg2rad(np.array(trajectory.turning_angles(self,steps_lag=1, normalized=False)))
-        
+        angles = np.deg2rad(np.array(trajectory.turning_angles(steps_lag=1, normalized=False)))
+
         cos = np.cos(angles)
         sin = np.sin(angles)
 
