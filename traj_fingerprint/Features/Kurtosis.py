@@ -4,6 +4,10 @@ from .Feature import Feature
 
 
 class Kurtosis(Feature):
+    """
+    From (Pinholt, 2019). Also is defined
+    by (Wagner, 2017).
+    """
     def calculate(self, trajectory):
         return [rawKurtosis(
             trajectory.get_noisy_x(),
