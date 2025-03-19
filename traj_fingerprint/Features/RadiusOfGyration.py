@@ -7,7 +7,8 @@ class RadiusOfGyration(Feature):
     """
     Obtained from https://doi.org/10.3390/receptors4010006
     However, I found other definition by (Wagner, 2017) which
-    works with eigenvalues. Check which definition to use.
+    works with eigenvalues (also called Asymmetry).
+    Check which definition to use.
     """
     def calculate(self, trajectory):
         x,y = trajectory.get_noisy_x(), trajectory.get_noisy_y()
