@@ -6,7 +6,7 @@ from .Feature import Feature
 class Gaussianity(Feature):
     """
     From (Pinholt, 2019). Also is defined
-    by (Wagner, 2017) and (Kowalek, 2022).
+    by (Wagner, 2017) and (Kowalek, 2022), (Kowalek, 2019).
     Check last paper if there are diffrerences
     with implemented method.
     """
