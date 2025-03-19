@@ -16,6 +16,10 @@ def empirical_velocitiy_autocorrelation(n, raw_t):
     return np.sum(dots)/(len(raw_t)-1)
 
 class VelocityAutocorrelation(Feature):
+    @property
+    def names(self):
+        return ['VelocityAutocorrelation1', 'VelocityAutocorrelation2']
+
     """
     Obtained from (Kowalek, 2022)
     """

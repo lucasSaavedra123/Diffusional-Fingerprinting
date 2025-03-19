@@ -4,6 +4,10 @@ from .Feature import Feature
 
 
 class Gaussianity(Feature):
+    @property
+    def names(self):
+        return ['Gaussianity']
+
     """
     From (Pinholt, 2019). Also is defined
     by (Wagner, 2017) and (Kowalek, 2022), (Kowalek, 2019).

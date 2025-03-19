@@ -8,6 +8,10 @@ class Lifetime(Feature):
     def __init__(self, model):
         self.__model = model
 
+    @property
+    def names(self):
+        return ['Lifetime']
+
     def calculate(self, trajectory):
         states, _ = GetStates(trajectory.displacements(), self.__model)
         return [rawLifetime(states)]

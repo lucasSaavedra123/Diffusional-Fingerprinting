@@ -5,6 +5,10 @@ from .Feature import Feature
 
 
 class FractalDimension(Feature):
+    @property
+    def names(self):
+        return ['FractalDimension']
+
     def calculate(self, trajectory):
         """
         From (Pinholt, 2019). Also is defined

@@ -4,6 +4,15 @@ from .Feature import Feature
 
 
 class RadialDistances(Feature):
+    @property
+    def names(self):
+        return [
+            'RadialDistMean',
+            'RadialDistMax',
+            'RadialDistMin',
+            'RadialDistMaxMin',
+        ]
+
     """
     Obtained from https://doi.org/10.3390/receptors4010006
     """

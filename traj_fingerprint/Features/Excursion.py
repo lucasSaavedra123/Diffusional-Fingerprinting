@@ -4,6 +4,10 @@ from .Feature import Feature
 
 
 class Excursion(Feature):
+    @property
+    def names(self):
+        return ['MaxExc', 'MeanMaxExc']
+
     """
     Obtained from (Kowalek, 2022)
     """

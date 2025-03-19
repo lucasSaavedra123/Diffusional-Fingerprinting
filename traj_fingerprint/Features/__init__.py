@@ -46,3 +46,9 @@ def get_trajectory_fingerprint(traj):
     for feature in FEATURES:
         fingerprint.extend(feature.calculate(traj))
     return fingerprint
+
+def get_feature_names():
+    names = []
+    for feature in FEATURES:
+        names.extend(feature.names)
+    return names

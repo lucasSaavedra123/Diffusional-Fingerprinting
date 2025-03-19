@@ -5,6 +5,18 @@ from .Feature import Feature
 
 
 class Displacements(Feature):
+    @property
+    def names(self):
+        return [
+            'DispMean',
+            'DispStd',
+            'DispKurtosis',
+            'DispSkew',
+            'DispMin',
+            'DispMax',
+            'DispCV'
+        ]
+
     """
     Obtained from https://doi.org/10.21203/rs.3.rs-3716053/v1
     , (Pinholt, 2019), and (Wimmenauer, 2023)

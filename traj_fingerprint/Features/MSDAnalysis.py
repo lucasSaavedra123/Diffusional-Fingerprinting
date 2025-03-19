@@ -4,6 +4,10 @@ from .Feature import Feature
 
 
 class MSDAnalysis(Feature):
+    @property
+    def names(self):
+        return ['D', 'Betha', 'GoodnessOfFit']
+
     """
     In almost all papers for Fingerprinting this
     analysis is included. Check later for precise

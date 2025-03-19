@@ -4,6 +4,10 @@ from .Feature import Feature
 
 
 class Velocity(Feature):
+    @property
+    def names(self):
+        return ['MeanVelocity']
+
     """
     Obtained from https://doi.org/10.3390/receptors4010006
     """

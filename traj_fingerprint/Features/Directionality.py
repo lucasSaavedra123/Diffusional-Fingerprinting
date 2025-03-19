@@ -4,6 +4,10 @@ from .Feature import Feature
 
 
 class Directionality(Feature):
+    @property
+    def names(self):
+        return ['tac', 'sinuosity', 'meanDP', 'corrDP', 'AvgSignDp']
+
     """
     Obtained from https://doi.org/10.21203/rs.3.rs-3716053/v1
     and https://doi.org/10.1039/D3NA00188A

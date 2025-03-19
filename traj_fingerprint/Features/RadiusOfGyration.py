@@ -4,6 +4,12 @@ from .Feature import Feature
 
 
 class RadiusOfGyration(Feature):
+    @property
+    def names(self):
+        return [
+            'RadiusOfGyration',
+        ]
+
     """
     Obtained from https://doi.org/10.3390/receptors4010006
     However, I found other definition by (Wagner, 2017)

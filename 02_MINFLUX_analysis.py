@@ -27,7 +27,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from tqdm import tqdm
 from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
-from traj_fingerprint.Features import get_trajectory_fingerprint
+from traj_fingerprint.Features import get_trajectory_fingerprint, get_feature_names
 from multiprocessing import Pool
 
 def pool_get_trajectory_fingerprint(traj):
@@ -203,14 +203,11 @@ if __name__ == "__main__":
 
     learn = ML(Xdat_new, ydat_new)
 
-    learn.Feature_rank(numfeats=3)
+    learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()))
     from matplotlib.lines import Line2D
 
-    custom_lines = [
-        Line2D([0], [0], color="darkred", lw=4),
-        Line2D([0], [0], color="dimgrey", lw=4),
-    ]
-    plt.legend(custom_lines, ["Confined diffusion", "Directed motion"], loc="upper center")
+    custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in categories]
+    plt.legend(custom_lines, categories, loc="upper center")
     plt.tight_layout()
     plt.savefig("Feature_ranking")
 
