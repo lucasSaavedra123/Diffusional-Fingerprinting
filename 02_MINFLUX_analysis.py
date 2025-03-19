@@ -196,18 +196,17 @@ if __name__ == "__main__":
 
     print("Computing ranked feature-plot between normal and directed motion")
 
-    Xdat_new, ydat_new = (
-        Xdat,#Xdat[(ydat == "CD") | (ydat == "DM")],
-        ydat#ydat[(ydat == "CD") | (ydat == "DM")],
-    )
+    selected_categories = ['BTX680R', 'BTX680R(+fPEG-Chol)', 'fPEG-Chol(+BTX680R)']
+    selected_bool = [y in selected_categories for y in ydat]
+
+    Xdat_new, ydat_new = (Xdat[selected_bool], ydat[selected_bool])
 
     learn = ML(Xdat_new, ydat_new)
 
     learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()))
     from matplotlib.lines import Line2D
 
-    custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in categories]
-    plt.legend(custom_lines, categories, loc="upper center")
+    custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in selected_categories]
+    plt.legend(custom_lines, selected_categories, loc="upper center")
     plt.tight_layout()
     plt.savefig("Feature_ranking")
-
