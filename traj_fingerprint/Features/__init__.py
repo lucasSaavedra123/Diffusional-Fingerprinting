@@ -22,6 +22,8 @@ from .RadiusOfGyration import RadiusOfGyration
 from .StraightnessIndex import StraightnessIndex
 from .Directionality import Directionality
 from .Area import Area
+from .VelocityAutocorrelation import VelocityAutocorrelation
+from .Excursion import Excursion
 
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")

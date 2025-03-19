@@ -8,7 +8,7 @@ class FractalDimension(Feature):
     def calculate(self, trajectory):
         """
         From (Pinholt, 2019). Also is defined
-        by (Wagner, 2017).
+        by (Wagner, 2017) and (Kowalek, 2022).
         """
         return [FractalDim(
             trajectory.get_noisy_x(),

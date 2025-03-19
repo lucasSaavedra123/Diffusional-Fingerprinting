@@ -6,7 +6,9 @@ from .Feature import Feature
 class Gaussianity(Feature):
     """
     From (Pinholt, 2019). Also is defined
-    by (Wagner, 2017).
+    by (Wagner, 2017) and (Kowalek, 2022).
+    Check last paper if there are diffrerences
+    with implemented method.
     """
     def calculate(self, trajectory):
         return [rawGaussianity(
