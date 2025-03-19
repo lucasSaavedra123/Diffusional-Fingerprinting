@@ -4,26 +4,26 @@ from pomegranate import *
 import numpy as np
 
 from .Feature import Feature
-from .MSDAnalysis import MSDAnalysis
+from .Area import Area
+from .Directionality import Directionality
+from .Displacements import Displacements
 from .Efficiency import Efficiency
+from .Excursion import Excursion
 from .FractalDimension import FractalDimension
 from .Gaussianity import Gaussianity
 from .Kurtosis import Kurtosis
-from .MSDRatio import MSDRatio
-from .Trappedness import Trappedness
-from .TimeInEachState import TimeInEachState
 from .Lifetime import Lifetime
-from .TrajectoryLength import TrajectoryLength
-from .Displacements import Displacements
 from .MeanMSD import MeanMSD
-from .Velocity import Velocity
+from .MSDAnalysis import MSDAnalysis
+from .MSDRatio import MSDRatio
 from .RadialDistances import RadialDistances
 from .RadiusOfGyration import RadiusOfGyration
 from .StraightnessIndex import StraightnessIndex
-from .Directionality import Directionality
-from .Area import Area
+from .TimeInEachState import TimeInEachState
+from .TrajectoryLength import TrajectoryLength
+from .Trappedness import Trappedness
+from .Velocity import Velocity
 from .VelocityAutocorrelation import VelocityAutocorrelation
-from .Excursion import Excursion
 
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
