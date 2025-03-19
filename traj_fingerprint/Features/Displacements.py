@@ -15,7 +15,6 @@ class Displacements(Feature):
             np.mean(displacements),
             kurtosis(displacements),
             skew(displacements),
-            np.kurtosis(displacements),
             np.std(displacements),
             np.min(displacements),
             np.max(displacements),
