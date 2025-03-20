@@ -9,10 +9,10 @@ from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint
 
 
-def calculate_msd_parameters(traj):
+def calculate_msd_parameters(traj, max_t=0.050):
     DELTA_T = 0.000132
     TIME_START = 0.000084
-    MAX_T = 0.050
+    MAX_T = max_t
 
     t_vec, msd, d, betha, precision, goodness_of_fit = traj.temporal_average_mean_squared_displacement(
         log_log_fit_limit=MAX_T,
@@ -56,6 +56,17 @@ def calculate_and_save_fingerprint_for_id(arguments):
         delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
         for field in delete_fields:
             del trace.info[field]
+
+        trace.info['segments'] = {}
+
+        for initial_index in range(0, trace.length, 100):
+            try:
+                sub_trace = trace.build_noisy_subtrajectory_from_range(initial_index, initial_index + 100)
+                calculate_msd_parameters(sub_trace, max_t=0.025)
+                sub_trace_fingerprint = get_trajectory_fingerprint(sub_trace)
+                trace.info['segments'][f"{initial_index}:{initial_index + 100}"] = sub_trace_fingerprint
+            except AssertionError:
+                pass
         trace.save()
     except AssertionError:
         pass
