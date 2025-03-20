@@ -64,7 +64,7 @@ def calculate_and_save_fingerprint_for_id(arguments):
         for initial_index in range(0, trace.length, 100):
             try:
                 sub_trace = trace.build_noisy_subtrajectory_from_range(initial_index, initial_index + 100)
-                calculate_msd_parameters(sub_trace, max_t=0.025)
+                calculate_msd_parameters(sub_trace, max_t=0.0066)
                 sub_trace_fingerprint = get_trajectory_fingerprint(sub_trace)
                 trace.info['segments'][f"{initial_index}:{initial_index + 100}"] = sub_trace_fingerprint
             except AssertionError:
