@@ -8,6 +8,7 @@ from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint
 
+USE_POOL = True
 
 def calculate_msd_parameters(traj, max_t=0.050):
     DELTA_T = 0.000132
@@ -42,9 +43,10 @@ def cache_msd_info(traces):
 
 def calculate_and_save_fingerprint_for_id(arguments):
     worker_i, trace_id = arguments
-    logger = multiprocessing.get_logger()
-    start_time = time.time()
-    logger.info(f"Worker {worker_i}/{trace_id} started at {start_time}")
+    if USE_POOL:
+        logger = multiprocessing.get_logger()
+        start_time = time.time()
+        logger.info(f"Worker {worker_i}/{trace_id} started at {start_time}")
 
     DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
     trace = Trajectory.objects(id=trace_id)
@@ -72,8 +74,9 @@ def calculate_and_save_fingerprint_for_id(arguments):
         pass
     DatabaseHandler.disconnect()
 
-    end_time = time.time()
-    logger.info(f"Worker {worker_i}/{trace_id} finished at {end_time} (Duration: {end_time - start_time:.2f} seconds)")
+    if USE_POOL:
+        end_time = time.time()
+        logger.info(f"Worker {worker_i}/{trace_id} finished at {end_time} (Duration: {end_time - start_time:.2f} seconds)")
 
 if __name__ == "__main__":
     """
@@ -87,6 +90,10 @@ if __name__ == "__main__":
     uploaded_trajectories_ids = [str(trajectory_result['_id']) for trajectory_result in Trajectory._get_collection().find({}, {'_id':1})]
     DatabaseHandler.disconnect()
 
-    pool = multiprocessing.Pool(processes=8)
-    pool.map(calculate_and_save_fingerprint_for_id, list(enumerate(uploaded_trajectories_ids)))
-    pool.close()
+    if USE_POOL:
+        pool = multiprocessing.Pool(processes=8)
+        pool.map(calculate_and_save_fingerprint_for_id, list(enumerate(uploaded_trajectories_ids)))
+        pool.close()
+    else:
+        for i, traj_id in tqdm(list(enumerate(uploaded_trajectories_ids))):
+            calculate_and_save_fingerprint_for_id([i,traj_id])
