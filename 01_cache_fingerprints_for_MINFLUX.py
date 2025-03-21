@@ -54,19 +54,18 @@ def calculate_and_save_fingerprint_for_id(arguments):
     trace = trace[0]
     try:
         calculate_msd_parameters(trace)
-        trace.info['fingerprint'] = get_trajectory_fingerprint(trace)
+        trace.info['fingerprint'] = {}
+        trace.info['fingerprint']['full'] = get_trajectory_fingerprint(trace)
         delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
         for field in delete_fields:
             del trace.info[field]
-
-        trace.info['segments'] = {}
 
         for initial_index in range(0, trace.length, 100):
             try:
                 sub_trace = trace.build_noisy_subtrajectory_from_range(initial_index, initial_index + 100)
                 calculate_msd_parameters(sub_trace, max_t=0.0066)
                 sub_trace_fingerprint = get_trajectory_fingerprint(sub_trace)
-                trace.info['segments'][f"{initial_index}:{initial_index + 100}"] = sub_trace_fingerprint
+                trace.info['fingerprint'][f"{initial_index}:{initial_index + 100}"] = sub_trace_fingerprint
             except AssertionError:
                 pass
         trace.save()
