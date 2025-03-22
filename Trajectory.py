@@ -767,6 +767,7 @@ class Trajectory(Document):
             def log_equation_anomalous(x, T, B, LOCALIZATION_PRECISION):
                 return np.log10(equation_anomalous(10**x, T, B, LOCALIZATION_PRECISION))
 
+            assert np.all(msd_fit!=0), "First MSD point is zero"
             popt, _ = curve_fit(log_equation_anomalous, np.log10(t_vec_fit/DELTA_T), np.log10(msd_fit), bounds=((0, 0, 0), (np.inf, 2, np.inf)), maxfev=2000)
             goodness_of_fit = msd_fit - equation_anomalous(t_vec_fit/DELTA_T, popt[0], popt[1], popt[2])
             goodness_of_fit = np.sum(goodness_of_fit**2)/(len(t_vec_fit)-2)
