@@ -106,7 +106,7 @@ if __name__ == "__main__":
         np.save("y_MINFLUX", np.array(labels))
 
     """Train classifiers to obtain insights"""
-    Xdat = np.load("X_fingerprints_MINFLUX.npy")
+    Xdat = np.load("X_fingerprints_MINFLUX.npy")[:,:-5]
     ydat = np.load("y_MINFLUX.npy")
     conv_dict = dict(zip(range(len(categories)), list(categories)))
     ydat = np.array([conv_dict[i] for i in ydat])
