@@ -29,6 +29,8 @@ from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint, get_feature_names
 from multiprocessing import Pool
+from imblearn.under_sampling import RandomUnderSampler
+from CONSTANTS import PROJECT_PATH
 
 def pool_get_trajectory_fingerprint(traj):
     try:
@@ -68,12 +70,12 @@ def cache_msd_info(traces):
     return traces
 
 if __name__ == "__main__":
-    categories = ['BTX680R', 'fPEG-Chol', 'BTX680R(+fPEG-Chol)', 'fPEG-Chol(+BTX680R)']
+    categories = ['CF®680R-BTX', 'fPEG-Chol', 'CF®680R-BTX(+fPEG-Chol)', 'fPEG-Chol(+CF®680R-BTX)']
     category_to_colors = {
-        'BTX680R':'darkred',
+        'CF®680R-BTX':'darkred',
         'fPEG-Chol':'dimgrey',
-        'BTX680R(+fPEG-Chol)':'darkorange',
-        'fPEG-Chol(+BTX680R)':'darkgreen',
+        'CF®680R-BTX(+fPEG-Chol)':'darkorange',
+        'fPEG-Chol(+CF®680R-BTX)':'darkgreen',
         'BTX640R': 'purple'
     }
 
@@ -82,11 +84,11 @@ if __name__ == "__main__":
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
         queries = {
-            'BTX680R':{'info.dataset':'BTX680R'},
+            'CF®680R-BTX':{'info.dataset':'BTX680R'},
             'BTX640R':{'info.dataset':'Control'},
             'fPEG-Chol':{'info.dataset':'CholesterolPEGKK114'},
-            'BTX680R(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
-            'fPEG-Chol(+BTX680R)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
+            'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+            'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
         }
 
         fingerprints = []
@@ -110,39 +112,52 @@ if __name__ == "__main__":
     ydat = np.load("y_MINFLUX.npy")
     conv_dict = dict(zip(range(len(categories)), list(categories)))
     ydat = np.array([conv_dict[i] for i in ydat])
-    learn = ML(Xdat, ydat)
-    learn.Train(algorithm="Logistic")
+
     print("Computing confusion matrix")
+    selected = (ydat == categories[0]) | (ydat == categories[1])
     X_train, X_test, y_train, y_test = train_test_split(
-        Xdat, ydat, test_size=0.3, random_state=42
+        Xdat[selected], ydat[selected], test_size=0.2, random_state=42
     )
+    rus = RandomUnderSampler(replacement=False, random_state=42)
+    X_train, y_train = rus.fit_resample(X_train, y_train)
+    learn = ML(X_train, y_train)
+    learn.Train()
     y_pred = learn.Predict(ML(X_test, y_test, center=False))
+    m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred[0]])
 
-    m = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred[0]])
+    selected = (ydat == categories[2]) | (ydat == categories[3])
+    ydat = ydat[selected]
+    ydat[ydat == categories[2]] = categories[0]
+    ydat[ydat == categories[3]] = categories[1]
 
-    xnames = learn.to_string
-    ynames = learn.to_string
-    fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-    ax.matshow(m, cmap="Blues")
-    for i in range(m.shape[0]):
-        for j in range(m.shape[0]):
-            if m[i, j] < np.max(m) / 2:
-                ax.text(j, i, m[i, j], ha="center", color="black")
-            else:
-                ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
-    ax.set(
-        yticks=range(len(categories)),
-        xticks=range(len(categories)),
-        # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
-        xticklabels=[xnames[i] for i in range(len(categories))][::-1],
-        yticklabels=[ynames[i] for i in range(len(categories))][::-1],
-        xlabel="Predicted label",
-        ylabel="True label",
-    )
-    ax.xaxis.set_ticks_position("bottom")
-    fig.autofmt_xdate(rotation=45)
-    fig.tight_layout()
-    fig.savefig("Confusion_matrix")
+    y_pred = learn.Predict(ML(Xdat[selected], ydat, center=False))
+    m2 = confusion_matrix(ydat, [learn.to_string[i] for i in y_pred[0]])
+
+    for mi, m in enumerate([m1,m2]):
+        m = np.round(m/(np.sum(m,axis=1).reshape(2,1)),2)
+        xnames = learn.to_string
+        ynames = learn.to_string
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        ax.matshow(m, cmap="Blues")
+        for i in range(m.shape[0]):
+            for j in range(m.shape[0]):
+                if m[i, j] < np.max(m) / 2:
+                    ax.text(j, i, m[i, j], ha="center", color="black")
+                else:
+                    ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
+        ax.set(
+            yticks=range(0,2),
+            xticks=range(0,2),
+            # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
+            xticklabels=[xnames[i] for i in range(0,2)][::-1],
+            yticklabels=[ynames[i] for i in range(0,2)][::-1],
+            xlabel="Predicted label",
+            ylabel="True label",
+        )
+        ax.xaxis.set_ticks_position("bottom")
+        fig.autofmt_xdate(rotation=0)
+        fig.tight_layout()
+        fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_MINFLUX_ANALYSIS_{mi}.svg"))
     print("Computing LDA projection 3D bubbles")
     learn.Reduce(n_components=3, method="lin")
 
