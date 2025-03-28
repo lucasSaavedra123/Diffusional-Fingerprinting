@@ -114,24 +114,24 @@ if __name__ == "__main__":
     ydat = np.array([conv_dict[i] for i in ydat])
 
     print("Computing confusion matrix")
-    selected = (ydat == categories[0]) | (ydat == categories[1])
+    selected_1 = (ydat == categories[0]) | (ydat == categories[1])
     X_train, X_test, y_train, y_test = train_test_split(
-        Xdat[selected], ydat[selected], test_size=0.2, random_state=42
+        Xdat[selected_1], ydat[selected_1], test_size=0.2, random_state=42
     )
     rus = RandomUnderSampler(replacement=False, random_state=42)
     X_train, y_train = rus.fit_resample(X_train, y_train)
     learn = ML(X_train, y_train)
-    learn.Train()
+    learn.Train(algorithm='Boost')
     y_pred = learn.Predict(ML(X_test, y_test, center=False))
     m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred[0]])
 
-    selected = (ydat == categories[2]) | (ydat == categories[3])
-    ydat = ydat[selected]
-    ydat[ydat == categories[2]] = categories[0]
-    ydat[ydat == categories[3]] = categories[1]
+    selected_2 = (ydat == categories[2]) | (ydat == categories[3])
+    new_ydat = ydat[selected_2]
+    new_ydat[new_ydat == categories[2]] = categories[0]
+    new_ydat[new_ydat == categories[3]] = categories[1]
 
-    y_pred = learn.Predict(ML(Xdat[selected], ydat, center=False))
-    m2 = confusion_matrix(ydat, [learn.to_string[i] for i in y_pred[0]])
+    y_pred = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))
+    m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred[0]])
 
     for mi, m in enumerate([m1,m2]):
         m = np.round(m/(np.sum(m,axis=1).reshape(2,1)),2)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         fig.tight_layout()
         fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_MINFLUX_ANALYSIS_{mi}.svg"))
     print("Computing LDA projection 3D bubbles")
-    learn.Reduce(n_components=3, method="lin")
+    learn.Reduce(n_components=1, method="lin")
 
     MLfig = plt.figure(figsize=(6, 6))
     MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
@@ -167,62 +167,55 @@ if __name__ == "__main__":
     MLfig.tight_layout()
     MLfig.savefig("3Dbubbles_fingerprints", dpi=500)
 
-    print("Plotting LDA projection 1D")
+    for selected_i, (x,y) in enumerate([[Xdat[selected_1], ydat[selected_1]], [Xdat[selected_2], new_ydat]]):
+        print("Plotting LDA projection 1D")
+        colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in categories[:2]]
+        cbins = 4  # Discretizes the interpolation into bins
+        cmap_name = "my_list"
+        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
+        norm = matplotlib.colors.Normalize(vmin=-10.0, vmax=10.0)
+        numfeats = 4
+        learn = ML(x, y)
+        learn.Reduce("lin", n_components=1)
 
-    colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in categories]
-    cbins = 4  # Discretizes the interpolation into bins
-    cmap_name = "my_list"
-    cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
-    norm = matplotlib.colors.Normalize(vmin=-10.0, vmax=10.0)
-    numfeats = 4
-    learn = ML(Xdat, ydat)
-    learn.Reduce("lin", n_components=1)
-
-    learn.clf = learn.T
-    sort = np.argsort(np.abs(learn.clf.coef_[0]))
-    normweight = np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats] / np.max(
-        np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats]
-    )
-    #
-
-
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-
-    for i, l, c in zip(
-        range(len(categories)),
-        list(categories),
-        [category_to_colors[category] for category in categories],
-    ):
-        print(c)
-        center, count, sy = histogram(
-            learn.X[learn.y == i][:, 0],
-            color=c,
-            bars=True,
-            ax=ax,
-            bins=10,
-            alpha=0.7,
-            # range=(-5, 5),
-            normalize=True,
-            elinewidth=2,
-            capsize=2,
-            remove0=True,
-            legend=l,
+        learn.clf = learn.T
+        sort = np.argsort(np.abs(learn.clf.coef_[0]))
+        normweight = np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats] / np.max(
+            np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats]
         )
-    fig.savefig("Lindisc.pdf")
+        #
 
-    print("Computing ranked feature-plot between normal and directed motion")
 
-    selected_categories = ['BTX680R', 'BTX680R(+fPEG-Chol)', 'fPEG-Chol(+BTX680R)']
-    selected_bool = [y in selected_categories for y in ydat]
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
-    Xdat_new, ydat_new = (Xdat[selected_bool], ydat[selected_bool])
+        for i, l, c in zip(
+            range(len(categories[:2])),
+            list(categories[:2]),
+            [category_to_colors[category] for category in categories[:2]],
+        ):
+            print(c)
+            center, count, sy = histogram(
+                learn.X[learn.y == i][:, 0],
+                color=c,
+                bars=True,
+                ax=ax,
+                bins=10,
+                alpha=0.7,
+                range=(-6, 4),
+                normalize=True,
+                elinewidth=2,
+                capsize=2,
+                remove0=True,
+                legend=l,
+            )
+        fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_LINDISC_{selected_i}.svg"))
+        plt.clf()
+        print("Computing ranked feature-plot")
+        learn = ML(x, y)
+        learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:-5]))
+        from matplotlib.lines import Line2D
 
-    learn = ML(Xdat_new, ydat_new)
-
-    learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()))
-    from matplotlib.lines import Line2D
-
-    custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in selected_categories]
-    plt.legend(custom_lines, selected_categories, loc="upper center")
-    plt.tight_layout()
-    plt.savefig("Feature_ranking")
+        custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in categories[:2]]
+        plt.legend(custom_lines, categories[:2], loc="upper center")
+        plt.tight_layout()
+        plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_FEATURE_RANKING_{selected_i}.svg"))
