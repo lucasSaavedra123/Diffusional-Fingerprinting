@@ -9,7 +9,8 @@ class Area(Feature):
         return ['Area']
 
     """
-    Obtained from https://doi.org/10.21203/rs.3.rs-3716053/v1
+    Obtained from https://doi.org/10.21203/rs.3.rs-3716053/v1.
+    Also, it is calculated in (Vogler, 2023).
     """
     def calculate(self, trajectory):
         return [ConvexHull(trajectory.raw_trajectory).volume]
