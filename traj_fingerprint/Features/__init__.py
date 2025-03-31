@@ -1,30 +1,17 @@
 import os
 
 from pomegranate import *
-import numpy as np
 
-from .Feature import Feature
-from .Area import Area
-from .Directionality import Directionality
-from .Displacements import Displacements
-from .Efficiency import Efficiency
-from .Excursion import Excursion
-from .FractalDimension import FractalDimension
-from .Gaussianity import Gaussianity
-from .Kurtosis import Kurtosis
-from .Lifetime import Lifetime
-from .MeanMSD import MeanMSD
-from .MSDAnalysis import MSDAnalysis
-from .MSDRatio import MSDRatio
-from .RadialDistances import RadialDistances
-from .RadiusOfGyration import RadiusOfGyration
-from .StraightnessIndex import StraightnessIndex
-from .TimeInEachState import TimeInEachState
-from .TrajectoryLength import TrajectoryLength
-from .Trappedness import Trappedness
-from .Velocity import Velocity
-from .VelocityAutocorrelation import VelocityAutocorrelation
 
+current_directory = os.path.split(__file__)[0]
+features_files = os.listdir(current_directory)
+features_files.remove('__pycache__')
+features_files.remove('__init__.py')
+features_files.remove('Fingerprint_feat_gen.py')
+
+for feature_file in features_files:
+    feature_file = feature_file.split('.')[0]
+    exec(f"from .{feature_file} import {feature_file}")
 
 file = open(os.path.join(__file__,'..','..','..','HMMjson'), "r")
 json_s = ""
