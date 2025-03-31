@@ -10,7 +10,7 @@ class Intensity(Feature):
 
     def calculate(self, trajectory):
         info = trajectory.info
-        t = info['t']
+        t = trajectory.get_time()
 
         if 'drc' in info and 'intensity' in info:
             dcr = np.mean(info['dcr'])
