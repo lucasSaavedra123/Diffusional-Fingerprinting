@@ -1,0 +1,22 @@
+import numpy as np
+
+from .Feature import Feature
+
+
+class Efficiency(Feature):
+    @property
+    def names(self):
+        return ['meanDCR', 'meanECO', 'meanEFO']
+
+    def calculate(self, trajectory):
+        info = trajectory.info
+        t = info['t']
+
+        if 'drc' in info and 'intensity' in info:
+            dcr = np.mean(info['dcr'])
+            efo = np.mean(info['intensity'])
+            eco = np.mean(np.diff(t) * efo[:-1])
+            return [dcr,efo,eco]
+        else:
+            #If not available, just None
+            return [None,None,None]
