@@ -3,10 +3,10 @@ import numpy as np
 from .Feature import Feature
 
 
-class Efficiency(Feature):
+class Intensity(Feature):
     @property
     def names(self):
-        return ['meanDCR', 'meanECO', 'meanEFO']
+        return ['meanDCR', 'meanEFO', 'meanECO']
 
     def calculate(self, trajectory):
         info = trajectory.info
