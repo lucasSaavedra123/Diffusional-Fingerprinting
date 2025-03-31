@@ -3,13 +3,12 @@ from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
 
 from .Feature import Feature
-from .Fingerprint_feat_gen import GetMax
 
 
-class Ellipticity(Feature):
+class CenterSphericality(Feature):
     @property
     def names(self):
-        return ['Ellipticity']
+        return ['CenterSphericality']
 
     """
     Obtained from (Vogler, 2023).
@@ -18,10 +17,9 @@ class Ellipticity(Feature):
         A = np.array([trajectory.get_noisy_x(), trajectory.get_noisy_x()]).T
         B = np.array([[np.mean(trajectory.get_noisy_x())], [np.mean(trajectory.get_noisy_y())]]).T
         d_mean = (cdist(A,B)).mean()
-        d_max = GetMax(trajectory.get_noisy_x(), trajectory.get_noisy_y())
 
+        a_circle = np.pi * (d_mean**2)
         a_convex = ConvexHull(trajectory.raw_trajectory).volume
         
-        a_ellipsis = np.pi * d_max * d_mean
-        elli = a_convex / a_ellipsis
-        return [elli]
+        center_sphericality = a_convex / a_circle
+        return [center_sphericality]
