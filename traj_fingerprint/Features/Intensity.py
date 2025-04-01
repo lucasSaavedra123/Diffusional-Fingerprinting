@@ -12,10 +12,10 @@ class Intensity(Feature):
         info = trajectory.info
         t = trajectory.get_time()
 
-        if 'drc' in info and 'intensity' in info:
+        if 'dcr' in info and 'intensity' in info:
             dcr = np.mean(info['dcr'])
             efo = np.mean(info['intensity'])
-            eco = np.mean(np.diff(t) * efo[:-1])
+            eco = np.mean(np.diff(t) * info['intensity'][:-1])
             return [dcr,efo,eco]
         else:
             #If not available, just None
