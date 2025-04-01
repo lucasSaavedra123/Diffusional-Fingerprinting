@@ -128,16 +128,16 @@ if __name__ == "__main__":
     X_train, y_train = rus.fit_resample(X_train, y_train)
     learn = ML(X_train, y_train)
     learn.Train(algorithm='Boost')
-    y_pred = learn.Predict(ML(X_test, y_test, center=False))
-    m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred[0]])
+    y_pred_isolated = learn.Predict(ML(X_test, y_test, center=False))
+    m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred_isolated[0]])
 
     selected_2 = (ydat == categories[2]) | (ydat == categories[3])
     new_ydat = ydat[selected_2]
     new_ydat[new_ydat == categories[2]] = categories[0]
     new_ydat[new_ydat == categories[3]] = categories[1]
 
-    y_pred = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))
-    m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred[0]])
+    y_pred_simultaneous = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))
+    m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred_simultaneous[0]])
 
     m_titles = [
         "Both probes isolated",
