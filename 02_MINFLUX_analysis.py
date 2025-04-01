@@ -99,7 +99,10 @@ if __name__ == "__main__":
             for fingerprint in tqdm(query_fingerprints):
                 if 'fingerprint' in fingerprint['info']:
                     del fingerprint['info']['fingerprint']['full']
-                    fingerprints.extend([f for f in fingerprint['info']['fingerprint'].values()])
+                    new_fingerprints = [f for f in fingerprint['info']['fingerprint'].values()]
+                    for i in range(len(new_fingerprints)):
+                        new_fingerprints[i] = [np.NaN if f is None else f for f in new_fingerprints[i]]
+                    fingerprints.extend(new_fingerprints)
                     labels.extend([category_id] * len(fingerprint['info']['fingerprint']))
 
         DatabaseHandler.disconnect()
@@ -133,6 +136,11 @@ if __name__ == "__main__":
     y_pred = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))
     m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred[0]])
 
+    m_titles = [
+        "Both probes isolated",
+        "Both probes stained simultaneously"
+    ]
+
     for mi, m in enumerate([m1,m2]):
         m = np.round(m/(np.sum(m,axis=1).reshape(2,1)),2)
         xnames = learn.to_string
@@ -154,10 +162,12 @@ if __name__ == "__main__":
             xlabel="Predicted label",
             ylabel="True label",
         )
+        ax.set_title(m_titles[mi])
         ax.xaxis.set_ticks_position("bottom")
         fig.autofmt_xdate(rotation=0)
         fig.tight_layout()
         fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_MINFLUX_ANALYSIS_{mi}.svg"))
+    """
     print("Computing LDA projection 3D bubbles")
     learn.Reduce(n_components=1, method="lin")
 
@@ -166,7 +176,7 @@ if __name__ == "__main__":
     learn.ProjectPlot(axis=MLax, colors=[category_to_colors[category] for category in categories])
     MLfig.tight_layout()
     MLfig.savefig("3Dbubbles_fingerprints", dpi=500)
-
+    """
     for selected_i, (x,y) in enumerate([[Xdat[selected_1], ydat[selected_1]], [Xdat[selected_2], new_ydat]]):
         print("Plotting LDA projection 1D")
         colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in categories[:2]]
@@ -175,6 +185,7 @@ if __name__ == "__main__":
         cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
         norm = matplotlib.colors.Normalize(vmin=-10.0, vmax=10.0)
         numfeats = 4
+        x = x[:,np.logical_not(np.isnan(x).any(axis=0))]
         learn = ML(x, y)
         learn.Reduce("lin", n_components=1)
 
@@ -208,6 +219,8 @@ if __name__ == "__main__":
                 remove0=True,
                 legend=l,
             )
+
+            ax.axvline(learn.X[learn.y == i][:, 0].mean(),color=c,linestyle='--', linewidth=3)
         fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_LINDISC_{selected_i}.svg"))
         plt.clf()
         print("Computing ranked feature-plot")
