@@ -93,6 +93,7 @@ if __name__ == "__main__":
 
         fingerprints = []
         labels = []
+        fingerprints_ids = []
 
         for category_id, category in enumerate(categories):
             query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint':1})
@@ -104,11 +105,13 @@ if __name__ == "__main__":
                         new_fingerprints[i] = [np.NaN if f is None else f for f in new_fingerprints[i]]
                     fingerprints.extend(new_fingerprints)
                     labels.extend([category_id] * len(fingerprint['info']['fingerprint']))
+                    fingerprints_ids.extend([str(fingerprint['_id'])] * len(fingerprint['info']['fingerprint']))
 
         DatabaseHandler.disconnect()
 
         np.save("X_fingerprints_MINFLUX", np.array(fingerprints))
         np.save("y_MINFLUX", np.array(labels))
+        np.save("traj_ids", np.array(fingerprints_ids))
 
     """Train classifiers to obtain insights"""
     Xdat = np.load("X_fingerprints_MINFLUX.npy")[:,:-5]
