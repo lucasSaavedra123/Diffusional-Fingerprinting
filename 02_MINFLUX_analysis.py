@@ -116,6 +116,7 @@ if __name__ == "__main__":
     """Train classifiers to obtain insights"""
     Xdat = np.load("X_fingerprints_MINFLUX.npy")[:,:-5]
     ydat = np.load("y_MINFLUX.npy")
+    fingerprints_ids = np.load("traj_ids.npy")
     conv_dict = dict(zip(range(len(categories)), list(categories)))
     ydat = np.array([conv_dict[i] for i in ydat])
 
@@ -128,16 +129,16 @@ if __name__ == "__main__":
     X_train, y_train = rus.fit_resample(X_train, y_train)
     learn = ML(X_train, y_train)
     learn.Train(algorithm='Boost')
-    y_pred_isolated = learn.Predict(ML(X_test, y_test, center=False))
-    m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred_isolated[0]])
+    y_pred_isolated = learn.Predict(ML(X_test, y_test, center=False))[0]
+    m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred_isolated])
 
     selected_2 = (ydat == categories[2]) | (ydat == categories[3])
     new_ydat = ydat[selected_2]
     new_ydat[new_ydat == categories[2]] = categories[0]
     new_ydat[new_ydat == categories[3]] = categories[1]
 
-    y_pred_simultaneous = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))
-    m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred_simultaneous[0]])
+    y_pred_simultaneous = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))[0]
+    m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred_simultaneous])
 
     m_titles = [
         "Both probes isolated",
