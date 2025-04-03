@@ -32,6 +32,7 @@ from multiprocessing import Pool
 from imblearn.under_sampling import RandomUnderSampler
 from CONSTANTS import PROJECT_PATH
 import umap
+from collections import defaultdict
 def pool_get_trajectory_fingerprint(traj):
     try:
         return get_trajectory_fingerprint(traj)
@@ -130,15 +131,18 @@ if __name__ == "__main__":
     learn = ML(X_train, y_train)
     learn.Train(algorithm='Boost')
     y_pred_isolated = learn.Predict(ML(X_test, y_test, center=False))[0]
-    m1 = confusion_matrix(y_test, [learn.to_string[i] for i in y_pred_isolated])
+    y_pred_isolated = [learn.to_string[i] for i in y_pred_isolated]
+    m1 = confusion_matrix(y_test, y_pred_isolated)
 
     selected_2 = (ydat == categories[2]) | (ydat == categories[3])
+    fingerprints_ids = fingerprints_ids[selected_2]
     new_ydat = ydat[selected_2]
     new_ydat[new_ydat == categories[2]] = categories[0]
     new_ydat[new_ydat == categories[3]] = categories[1]
 
     y_pred_simultaneous = learn.Predict(ML(Xdat[selected_2], new_ydat, center=False))[0]
-    m2 = confusion_matrix(new_ydat, [learn.to_string[i] for i in y_pred_simultaneous])
+    y_pred_simultaneous = [learn.to_string[i] for i in y_pred_simultaneous]
+    m2 = confusion_matrix(new_ydat, y_pred_simultaneous)
 
     m_titles = [
         "Both probes isolated",
@@ -238,6 +242,18 @@ if __name__ == "__main__":
         plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_FEATURE_RANKING_{selected_i}.svg"))
         plt.clf()
 
+    classification_result = defaultdict(list)
+    for fing_id, classification in zip(fingerprints_ids, zip(new_ydat,y_pred_simultaneous)):
+        classification_result[fing_id].append(classification)
+
+    DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+    for fing_id in tqdm(classification_result):
+        trajectories = Trajectory.objects(id=fing_id)
+        assert len(trajectories) == 1
+        trajectory = trajectories[0]
+        trajectory.info['analysis']['predictions_on_each_100_segments'] = classification_result[fing_id]
+        trajectory.save()
+    DatabaseHandler.disconnect()
     """
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
 
