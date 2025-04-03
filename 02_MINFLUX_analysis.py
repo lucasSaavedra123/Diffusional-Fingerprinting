@@ -31,7 +31,7 @@ from traj_fingerprint.Features import get_trajectory_fingerprint, get_feature_na
 from multiprocessing import Pool
 from imblearn.under_sampling import RandomUnderSampler
 from CONSTANTS import PROJECT_PATH
-
+import umap
 def pool_get_trajectory_fingerprint(traj):
     try:
         return get_trajectory_fingerprint(traj)
@@ -235,3 +235,29 @@ if __name__ == "__main__":
         plt.legend(custom_lines, categories[:2], loc="upper center")
         plt.tight_layout()
         plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_FEATURE_RANKING_{selected_i}.svg"))
+        plt.clf()
+
+    """
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+    umap_object_0 = umap.UMAP()
+    umap_object_1 = umap.UMAP()
+
+    umap_object_0.fit(Xdat[selected_1][ydat[selected_1]=='CF®680R-BTX'])
+    umap_object_1.fit(Xdat[selected_1][ydat[selected_1]=='fPEG-Chol'])
+
+    embeddings_0 = umap_object_0.transform(Xdat[selected_1][ydat[selected_1]=='CF®680R-BTX'])
+    embeddings_1 = umap_object_1.transform(Xdat[selected_1][ydat[selected_1]=='fPEG-Chol'])
+
+    ax[0].scatter(embeddings_0[:,0], embeddings_0[:,1], c='red')
+    ax[1].scatter(embeddings_1[:,0], embeddings_1[:,1], c='grey')
+
+    embeddings_0 = umap_object_0.transform(Xdat[selected_2][new_ydat=='CF®680R-BTX'])
+    embeddings_1 = umap_object_1.transform(Xdat[selected_2][new_ydat=='fPEG-Chol'])
+
+    ax[0].scatter(embeddings_0[:,0], embeddings_0[:,1], c='black')
+    ax[1].scatter(embeddings_1[:,0], embeddings_1[:,1], c='black')
+
+    plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_UMAP.svg"))
+    plt.clf()
+    """
