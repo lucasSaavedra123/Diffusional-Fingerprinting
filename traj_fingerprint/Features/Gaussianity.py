@@ -6,7 +6,7 @@ from .Feature import Feature
 class Gaussianity(Feature):
     @property
     def names(self):
-        return ['Gaussianity']
+        return [r'$G$']
 
     """
     From (Pinholt, 2019). Also is defined

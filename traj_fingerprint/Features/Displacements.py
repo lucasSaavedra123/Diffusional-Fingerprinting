@@ -8,13 +8,13 @@ class Displacements(Feature):
     @property
     def names(self):
         return [
-            'DispMean',
-            'DispStd',
-            'DispKurtosis',
-            'DispSkew',
-            'DispMin',
-            'DispMax',
-            'DispCV'
+            r'$Disp_{Mean}$',
+            r'$Disp_{STD}$',
+            r'$Disp_{Kurt}$',
+            r'$Disp_{Skew}$',
+            r'$Disp_{Min}$',
+            r'$Disp_{Max}$',
+            r'$Disp_{CV}$',
         ]
 
     """

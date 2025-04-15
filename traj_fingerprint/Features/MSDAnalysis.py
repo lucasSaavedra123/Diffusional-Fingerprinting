@@ -6,7 +6,7 @@ from .Feature import Feature
 class MSDAnalysis(Feature):
     @property
     def names(self):
-        return ['D', 'Betha', 'GoodnessOfFit']
+        return [r'$D_{coeff}$', r'$\beta$', r'$GOF$']
 
     """
     In almost all papers for Fingerprinting this

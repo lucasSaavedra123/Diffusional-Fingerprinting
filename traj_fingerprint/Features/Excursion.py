@@ -6,7 +6,7 @@ from .Feature import Feature
 class Excursion(Feature):
     @property
     def names(self):
-        return ['MaxExc', 'MeanMaxExc']
+        return [r'$Exc_{Max}$', r'$Exc_{Mean}$']
 
     """
     Obtained from (Kowalek, 2022)

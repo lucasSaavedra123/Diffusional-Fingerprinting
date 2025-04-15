@@ -6,7 +6,7 @@ from .Feature import Feature
 class StraightnessIndex(Feature):
     @property
     def names(self):
-        return ['StraightnessIndex']
+        return [r'$S_{Index}$']
 
     """
     Obtained from https://doi.org/10.3390/receptors4010006

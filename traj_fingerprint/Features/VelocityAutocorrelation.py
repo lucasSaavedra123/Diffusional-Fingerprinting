@@ -18,7 +18,7 @@ def empirical_velocitiy_autocorrelation(n, raw_t):
 class VelocityAutocorrelation(Feature):
     @property
     def names(self):
-        return ['VelocityAutocorrelation1', 'VelocityAutocorrelation2']
+        return [r'$V_{Autocorr,1}$', r'$V_{Autocorr,2}$']
 
     """
     Obtained from (Kowalek, 2022)

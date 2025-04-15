@@ -7,10 +7,10 @@ class RadialDistances(Feature):
     @property
     def names(self):
         return [
-            'RadialDistMean',
-            'RadialDistMax',
-            'RadialDistMin',
-            'RadialDistMaxMin',
+            r'$RadialDist_{Mean}$',
+            r'$RadialDist_{Max}$',
+            r'$RadialDist_{Min}$',
+            r'$RadialDist_{MaxMin}$',
         ]
 
     """

@@ -6,7 +6,7 @@ from .Feature import Feature
 class ConvexDensityOfPoints(Feature):
     @property
     def names(self):
-        return ['ConvexDensityOfPoints']
+        return [r'$D$']
 
     """
     Obtained from (Vogler, 2023).

@@ -10,7 +10,7 @@ class Lifetime(Feature):
 
     @property
     def names(self):
-        return ['Lifetime']
+        return [r'$LifeTime$']
 
     def calculate(self, trajectory):
         states, _ = GetStates(trajectory.displacements(), self.__model)

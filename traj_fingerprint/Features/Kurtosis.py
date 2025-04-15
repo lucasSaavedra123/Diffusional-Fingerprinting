@@ -6,7 +6,7 @@ from .Feature import Feature
 class Kurtosis(Feature):
     @property
     def names(self):
-        return ['Kurtosis']
+        return [r'$Kurt$']
 
     """
     From (Pinholt, 2019). Also is defined

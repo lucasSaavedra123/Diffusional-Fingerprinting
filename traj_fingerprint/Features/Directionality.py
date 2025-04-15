@@ -6,7 +6,7 @@ from .Feature import Feature
 class Directionality(Feature):
     @property
     def names(self):
-        return ['tac', 'sinuosity', 'meanDP', 'corrDP', 'AvgSignDp']
+        return [r'$Tac$', r'$Sin$', r'$DP_{Mean}$', r'$DP_{Corr}$', r'$SignDP_{Mean}$']
 
     """
     Obtained from https://doi.org/10.21203/rs.3.rs-3716053/v1

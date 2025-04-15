@@ -6,7 +6,7 @@ from .Feature import Feature
 class Intensity(Feature):
     @property
     def names(self):
-        return ['meanDCR', 'meanEFO', 'meanECO']
+        return [r'$DCR_{Mean}$', r'$EFO_{Mean}$', r'$ECO_{Mean}$']
 
     def calculate(self, trajectory):
         info = trajectory.info

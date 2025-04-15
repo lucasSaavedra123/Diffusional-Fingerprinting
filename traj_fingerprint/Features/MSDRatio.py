@@ -6,7 +6,7 @@ from .Feature import Feature
 class MSDRatio(Feature):
     @property
     def names(self):
-        return ['MSDRatio']
+        return [r'$MSD_{Ratio}$']
 
     """
     From (Pinholt, 2019). Also is defined

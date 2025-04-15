@@ -7,7 +7,7 @@ from .Feature import Feature
 class Trappedness(Feature):
     @property
     def names(self):
-        return ['Trappedness']
+        return [r'$Trap$']
 
     """
     Defined by (Pinholt, 2019) and (Wagner, 2017) and (Kowalek, 2019).

@@ -9,7 +9,7 @@ class TimeInEachState(Feature):
 
     @property
     def names(self):
-        return ['T0', 'T1', 'T2', 'T3']
+        return [r'$T_{0}$', r'$T_{1}$', r'$T_{2}$', r'$T_{3}$']
 
     def calculate(self, trajectory):
         states, _ = GetStates(trajectory.displacements(), self.__model)

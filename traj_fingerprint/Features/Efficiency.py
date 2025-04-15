@@ -6,7 +6,7 @@ from .Feature import Feature
 class Efficiency(Feature):
     @property
     def names(self):
-        return ['Efficiency']
+        return [r'$E_{f}$']
 
     """
     From (Pinholt, 2019). Also is defined

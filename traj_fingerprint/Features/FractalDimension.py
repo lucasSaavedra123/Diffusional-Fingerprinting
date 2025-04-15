@@ -7,7 +7,7 @@ from .Feature import Feature
 class FractalDimension(Feature):
     @property
     def names(self):
-        return ['FractalDimension']
+        return [r'$F_{Dim}$']
 
     def calculate(self, trajectory):
         """

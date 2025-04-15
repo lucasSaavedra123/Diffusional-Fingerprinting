@@ -8,7 +8,7 @@ from .Feature import Feature
 class CenterSphericality(Feature):
     @property
     def names(self):
-        return ['CenterSphericality']
+        return [r'$C_{Spher}$']
 
     """
     Obtained from (Vogler, 2023).

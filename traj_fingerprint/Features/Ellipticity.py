@@ -9,7 +9,7 @@ from .Fingerprint_feat_gen import GetMax
 class Ellipticity(Feature):
     @property
     def names(self):
-        return ['Ellipticity']
+        return [r'$E_{l}$']
 
     """
     Obtained from (Vogler, 2023).

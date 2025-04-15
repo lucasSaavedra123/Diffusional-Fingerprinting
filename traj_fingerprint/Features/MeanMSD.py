@@ -6,7 +6,7 @@ from .Feature import Feature
 class MeanMSD(Feature):
     @property
     def names(self):
-        return ['MeanMSD']
+        return [r'$MSD_{Mean}$']
 
     def calculate(self, trajectory):
         return [np.mean(trajectory.info['msd'])]

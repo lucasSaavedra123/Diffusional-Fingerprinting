@@ -7,7 +7,7 @@ class RadiusOfGyration(Feature):
     @property
     def names(self):
         return [
-            'RadiusOfGyration',
+            r'$R_{g}$',
         ]
 
     """

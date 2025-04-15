@@ -6,7 +6,7 @@ from .Feature import Feature
 class MaximumDistance(Feature):
     @property
     def names(self):
-        return ['MaximumDistance']
+        return [r'$Max_{Dist}$']
 
     """
     From (Pinholt, 2019). In (Vogler, 2024)
