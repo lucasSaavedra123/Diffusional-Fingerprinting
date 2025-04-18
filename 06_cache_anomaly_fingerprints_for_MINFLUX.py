@@ -55,6 +55,8 @@ def calculate_and_save_fingerprint_for_id(arguments):
 
     if not ('analysis' in trace.info and 'anomaly' in trace.info['analysis']):
         return
+    elif 'fingerprint_anomaly' in trace.info['analysis']:
+        return
 
     try:
         trace.info['analysis']['fingerprint_anomaly'] = {0: [], 1: []}
