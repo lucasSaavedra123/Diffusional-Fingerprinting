@@ -75,7 +75,7 @@ if __name__ == "__main__":
             for fingerprint in tqdm(query_fingerprints):
                 if 'analysis' in fingerprint['info'] and 'fingerprint_anomaly' in fingerprint['info']['analysis']:
                     for sub_category_i, sub_category in enumerate(['Normal', 'Anomaly']):
-                        new_fingerprints = [f for f in fingerprint['info']['analysis']['fingerprint_anomaly']]
+                        new_fingerprints = [f for f in fingerprint['info']['analysis']['fingerprint_anomaly'][str(sub_category_i)]]
                         for i in range(len(new_fingerprints)):
                             new_fingerprints[i] = [np.NaN if f is None else f for f in new_fingerprints[i]]
                         fingerprints.extend(new_fingerprints)

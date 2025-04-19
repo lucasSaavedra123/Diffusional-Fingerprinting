@@ -8,7 +8,7 @@ from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint
 
-USE_POOL = False
+USE_POOL = True
 
 def calculate_msd_parameters(traj, max_t=0.050):
     DELTA_T = 0.000132
@@ -59,19 +59,19 @@ def calculate_and_save_fingerprint_for_id(arguments):
         return
 
     try:
-        trace.info['analysis']['fingerprint_anomaly'] = {0: [], 1: []}
+        trace.info['analysis']['fingerprint_anomaly'] = {'0': [], '1': []}
 
         sub_traces_dic = trace.sub_trajectories_trajectories_from_confinement_states(custom_states=trace.info['analysis']['anomaly'])
         for a_key in sub_traces_dic:
             for sub_trace in sub_traces_dic[a_key]:
                 try:
                     calculate_msd_parameters(sub_trace)
-                    trace.info['analysis']['fingerprint_anomaly'][a_key].append(get_trajectory_fingerprint(sub_trace))
+                    trace.info['analysis']['fingerprint_anomaly'][str(a_key)].append(get_trajectory_fingerprint(sub_trace))
                 except AssertionError:
                     pass
         trace.save()
-    except AssertionError:
-        pass
+    except AssertionError as e:
+        print(e)
     DatabaseHandler.disconnect()
 
     if USE_POOL:
