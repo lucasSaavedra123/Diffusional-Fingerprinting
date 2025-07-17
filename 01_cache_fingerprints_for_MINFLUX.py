@@ -60,14 +60,16 @@ def calculate_and_save_fingerprint_for_id(arguments):
         for field in delete_fields:
             del trace.info[field]
 
-        for initial_index in range(0, trace.length, 100):
-            try:
-                sub_trace = trace.build_noisy_subtrajectory_from_range(initial_index, initial_index + 100)
-                calculate_msd_parameters(sub_trace, max_t=0.0066)
-                sub_trace_fingerprint = get_trajectory_fingerprint(sub_trace)
-                trace.info['fingerprint'][f"{initial_index}:{initial_index + 100}"] = sub_trace_fingerprint
-            except AssertionError:
-                pass
+        for state in ['normal', 'directed', 'confinement', 'subdifussive']:
+            trace.info['fingerprint'][state] = []
+            states = trace.info['analysis'][f'{state}-states-deepspt']
+
+            for sub_trace in trace.sub_trajectories_trajectories_from_confinement_states(custom_states=states)[1]:
+                try:
+                    calculate_msd_parameters(sub_trace, max_t=0.0066)
+                    trace.info['fingerprint'][state].append(get_trajectory_fingerprint(sub_trace))
+                except AssertionError:
+                    pass
         trace.save()
     except AssertionError:
         pass
