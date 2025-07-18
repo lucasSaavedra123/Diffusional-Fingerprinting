@@ -115,7 +115,8 @@ if __name__ == "__main__":
             #np.save("traj_ids", np.array(fingerprints_ids))
 
         """Train classifiers to obtain insights"""
-        Xdat = np.load(f"{state}_X_fingerprints_MINFLUX.npy")[:,:-5]
+        Xdat = np.load(f"{state}_X_fingerprints_MINFLUX.npy")
+        Xdat = np.concatenate((Xdat[:, :21], Xdat[:, 24:-5]), axis=1)
         ydat = np.load(f"{state}_y_MINFLUX.npy")
         #fingerprints_ids = np.load("traj_ids.npy")
         conv_dict = dict(zip(range(len(categories)), list(categories)))
@@ -233,7 +234,7 @@ if __name__ == "__main__":
             plt.clf()
             print("Computing ranked feature-plot")
             learn = ML(x, y)
-            learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:-5]))
+            learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:21] + get_feature_names()[24:-5]))
             from matplotlib.lines import Line2D
 
             custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in categories[:2]]
