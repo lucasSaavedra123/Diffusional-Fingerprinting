@@ -75,7 +75,7 @@ if __name__ == "__main__":
     states = ['normal', 'directed', 'confinement', 'subdifussive']
     for state in states:
         category_to_colors = {
-            'CF®680R-BTX':'darkred',
+            'CF®680R-BTX':'purple',
             'fPEG-Chol':'dimgrey',
             'CF®680R-BTX(+fPEG-Chol)':'darkorange',
             'fPEG-Chol(+CF®680R-BTX)':'darkgreen',
@@ -207,6 +207,8 @@ if __name__ == "__main__":
 
 
             fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+            plt.xticks(fontsize=32, fontweight='regular', fontfamily='arial')
+            plt.yticks(fontsize=32, fontweight='regular', fontfamily='arial')
 
             for i, l, c in zip(
                 range(len(categories[:2])),
@@ -221,7 +223,7 @@ if __name__ == "__main__":
                     ax=ax,
                     bins=25,
                     alpha=0.7,
-                    range=(-25, 25),
+                    range=(-20, 20),
                     normalize=True,
                     elinewidth=2,
                     capsize=2,
