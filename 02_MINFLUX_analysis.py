@@ -219,9 +219,9 @@ if __name__ == "__main__":
                     color=c,
                     bars=True,
                     ax=ax,
-                    bins=10,
+                    bins=25,
                     alpha=0.7,
-                    range=(-6, 4),
+                    range=(-25, 25),
                     normalize=True,
                     elinewidth=2,
                     capsize=2,
@@ -229,6 +229,7 @@ if __name__ == "__main__":
                     legend=l,
                 )
 
+                ax.set_xlim([-20,20])
                 ax.axvline(learn.X[learn.y == i][:, 0].mean(),color=c,linestyle='--', linewidth=3)
             fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_LINDISC_{selected_i}_{state}.svg"))
             plt.clf()
