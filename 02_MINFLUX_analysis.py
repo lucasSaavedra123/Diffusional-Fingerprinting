@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
         """Train classifiers to obtain insights"""
         Xdat = np.load(f"{state}_X_fingerprints_MINFLUX.npy")
-        Xdat = np.concatenate((Xdat[:, :21], Xdat[:, 24:-5]), axis=1)
+        Xdat = Xdat[:, :-5]
         ydat = np.load(f"{state}_y_MINFLUX.npy")
         #fingerprints_ids = np.load("traj_ids.npy")
         conv_dict = dict(zip(range(len(categories)), list(categories)))
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         rus = RandomUnderSampler(replacement=False, random_state=42)
         X_train, y_train = rus.fit_resample(X_train, y_train)
         learn = ML(X_train, y_train)
-        learn.Train(algorithm='Boost')
+        learn.Train(algorithm='Boost', plot=False)
         y_pred_isolated = learn.Predict(ML(X_test, y_test, center=False))[0]
         y_pred_isolated = [learn.to_string[i] for i in y_pred_isolated]
         m1 = confusion_matrix(y_test, y_pred_isolated)
@@ -234,7 +234,7 @@ if __name__ == "__main__":
             plt.clf()
             print("Computing ranked feature-plot")
             learn = ML(x, y)
-            learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:21] + get_feature_names()[24:-5]))
+            learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:-5]))
             from matplotlib.lines import Line2D
 
             custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in categories[:2]]
