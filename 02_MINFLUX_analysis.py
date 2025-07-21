@@ -99,6 +99,7 @@ if __name__ == "__main__":
             #fingerprints_ids = []
 
             for category_id, category in enumerate(categories):
+                queries[category].update({'info.immobile': False})
                 query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint':1})
                 for fingerprint in tqdm(query_fingerprints):
                     if 'fingerprint' in fingerprint['info']:

@@ -1476,7 +1476,7 @@ class ML:
         from matplotlib.colors import LinearSegmentedColormap
 
         colors = [
-            matplotlib.colors.to_rgb("darkred"),
+            matplotlib.colors.to_rgb("purple"),
             matplotlib.colors.to_rgb("dimgrey"),
         ]  # R -> G -> B
         cbins = 2  # Discretizes the interpolation into bins
@@ -1572,9 +1572,9 @@ class ML:
             )
 
             ax.plot(np.linspace(0, imp), np.ones(50) * (i), "k", linewidth=1)
-            ax.text(imp + 0.1, i, f"{nimp:4.2f}", fontsize=20)
+            ax.text(imp + 0.1, i, f"{nimp:4.2f}", fontsize=35)
         for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontsize(20)
+            tick.label.set_fontsize(35)
         if savefig is not None:
             fig.savefig(savefig + ".pdf")
         if show:
