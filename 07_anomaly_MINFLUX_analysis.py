@@ -37,212 +37,223 @@ from collections import defaultdict
 
 if __name__ == "__main__":
     categories = ['CF®680R-BTX(+fPEG-Chol)', 'fPEG-Chol(+CF®680R-BTX)']
+    states = ['normal', 'directed', 'confinement', 'subdifussive']
+    for state in states:
+        new_categories = [
+            'CF®680R-BTX(+fPEG-Chol) No Misclassified',
+            'CF®680R-BTX(+fPEG-Chol) Misclassified',
+            'fPEG-Chol(+CF®680R-BTX) No Misclassified',
+            'fPEG-Chol(+CF®680R-BTX) Misclassified',
+        ]
 
-    new_categories = [
-        'CF®680R-BTX(+fPEG-Chol) Normal',
-        'CF®680R-BTX(+fPEG-Chol) Anomaly',
-        'fPEG-Chol(+CF®680R-BTX) Normal',
-        'fPEG-Chol(+CF®680R-BTX) Anomaly',
-    ]
-
-    category_to_colors = {
-        'CF®680R-BTX(+fPEG-Chol) Normal':'darkgray',
-        'CF®680R-BTX(+fPEG-Chol) Anomaly':'darkred',
-        'fPEG-Chol(+CF®680R-BTX) Normal':'darkgreen',
-        'fPEG-Chol(+CF®680R-BTX) Anomaly':'darkorange',
-    }
-
-    category_to_colors = {
-        'Normal':'darkgray',
-        'Anomaly':'darkred',
-    }
-
-    """Get fingerprints"""
-    if not os.path.isfile("X_fingerprints_MINFLUX_anomaly.npy"):
-        DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
-
-        queries = {
-            'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
-            'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
+        category_to_colors = {
+            'CF®680R-BTX(+fPEG-Chol) No Misclassified':'darkgray',
+            'CF®680R-BTX(+fPEG-Chol) Misclassified':'darkred',
+            'fPEG-Chol(+CF®680R-BTX) No Misclassified':'darkgreen',
+            'fPEG-Chol(+CF®680R-BTX) Misclassified':'darkorange',
         }
 
-        fingerprints = []
-        labels = []
-        fingerprints_ids = []
-        #['analysis']['fingerprint_anomaly'][0/1]
-        for category_id, category in enumerate(categories):
-            query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.analysis.fingerprint_anomaly':1})
-            for fingerprint in tqdm(query_fingerprints):
-                if 'analysis' in fingerprint['info'] and 'fingerprint_anomaly' in fingerprint['info']['analysis']:
-                    for sub_category_i, sub_category in enumerate(['Normal', 'Anomaly']):
-                        new_fingerprints = [f for f in fingerprint['info']['analysis']['fingerprint_anomaly'][str(sub_category_i)]]
-                        for i in range(len(new_fingerprints)):
-                            new_fingerprints[i] = [np.NaN if f is None else f for f in new_fingerprints[i]]
-                        fingerprints.extend(new_fingerprints)
-                        labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
-                        fingerprints_ids.extend([str(fingerprint['_id'])] * len(new_fingerprints))
+        category_to_colors = {
+            'No Misclassified':'darkgray',
+            'Misclassified':'darkred',
+        }
 
-        DatabaseHandler.disconnect()
+        categories_labels = ['Misclassified', 'No Misclassified']
 
-        np.save("X_fingerprints_MINFLUX_anomaly", np.array(fingerprints))
-        np.save("y_MINFLUX_anomaly", np.array(labels))
-        np.save("traj_ids_anomaly", np.array(fingerprints_ids))
+        """Get fingerprints"""
+        if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}.npy"):
+            DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
-    """Train classifiers to obtain insights"""
-    Xdat = np.load("X_fingerprints_MINFLUX_anomaly.npy")[:,:-5]
-    ydat = np.load("y_MINFLUX_anomaly.npy")
-    fingerprints_ids = np.load("traj_ids_anomaly.npy")
-    conv_dict = dict(zip(range(len(new_categories)), list(new_categories)))
-    ydat = np.array([conv_dict[i] for i in ydat])
+            queries = {
+                'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+                'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
+            }
 
-    print("Computing confusion matrix")
-    selected_1 = (ydat == new_categories[0]) | (ydat == new_categories[1])
-    X_train, X_test, y_train, y_test = train_test_split(
-        Xdat[selected_1], ydat[selected_1], test_size=0.2, random_state=42
-    )
-    rus = RandomUnderSampler(replacement=False, random_state=42)
-    X_train, y_train = rus.fit_resample(X_train, y_train)
-    learn = ML(X_train, y_train)
-    learn.Train(algorithm='Boost')
-    y_pred_btx = learn.Predict(ML(X_test, y_test, center=False))[0]
-    y_pred_btx = [learn.to_string[i] for i in y_pred_btx]
-    m1 = confusion_matrix(y_test, y_pred_btx)
+            fingerprints = []
+            labels = []
+            #['analysis']['fingerprint_anomaly'][0/1]
+            for category_id, category in enumerate(categories):
+                query_fingerprints = Trajectory._get_collection().find(queries[category],
+                    {
+                        f'info.analysis.predictions_on_each_{state}_segments': 1,
+                        f'info.fingerprint.{state}': 1
+                    })
 
-    selected_2 = (ydat == new_categories[2]) | (ydat == new_categories[3])
-    X_train, X_test, y_train, y_test = train_test_split(
-        Xdat[selected_2], ydat[selected_2], test_size=0.2, random_state=42
-    )
-    rus = RandomUnderSampler(replacement=False, random_state=42)
-    X_train, y_train = rus.fit_resample(X_train, y_train)
-    learn = ML(X_train, y_train)
-    learn.Train(algorithm='Boost')
-    y_pred_chol = learn.Predict(ML(X_test, y_test, center=False))[0]
-    y_pred_chol = [learn.to_string[i] for i in y_pred_chol]
-    m2 = confusion_matrix(y_test, y_pred_chol)
+                for fingerprint in tqdm(query_fingerprints):
+                    if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
+                        for sub_category_i, sub_category in enumerate(categories_labels):
+                            new_fingerprints = []
 
-    m_titles = [
-        "BTX",
-        "fPEG-Chol"
-    ]
+                            for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
+                                raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
 
-    for mi, m in enumerate([m1,m2]):
-        m = np.round(m/(np.sum(m,axis=1).reshape(2,1)),2)
-        xnames = learn.to_string
-        xnames = [xnames[name_i].split(' ')[-1] for name_i, _ in enumerate(xnames)]
-        ynames = learn.to_string
-        ynames = [ynames[name_i].split(' ')[-1] for name_i, _ in enumerate(ynames)]
+                                if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
+                                    new_fingerprints.append(raw_fingerprint)
+                                if sub_category == 'No Misclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
+                                    new_fingerprints.append(raw_fingerprint)
 
-        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-        ax.matshow(m, cmap="Blues")
-        for i in range(m.shape[0]):
-            for j in range(m.shape[0]):
-                if m[i, j] < np.max(m) / 2:
-                    ax.text(j, i, m[i, j], ha="center", color="black")
-                else:
-                    ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
-        ax.set(
-            yticks=range(0,2),
-            xticks=range(0,2),
-            # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
-            xticklabels=[xnames[i] for i in range(0,2)][::-1],
-            yticklabels=[ynames[i] for i in range(0,2)][::-1],
-            xlabel="Predicted label",
-            ylabel="True label",
+                            fingerprints.extend(new_fingerprints)
+                            labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
+
+            DatabaseHandler.disconnect()
+
+            np.save(f"X_fingerprints_MINFLUX_anomaly_{state}", np.array(fingerprints))
+            np.save(f"y_MINFLUX_anomaly_{state}", np.array(labels))
+
+        """Train classifiers to obtain insights"""
+        Xdat = np.load(f"X_fingerprints_MINFLUX_anomaly_{state}.npy")[:,:-5]
+        ydat = np.load(f"y_MINFLUX_anomaly_{state}.npy")
+        conv_dict = dict(zip(range(len(new_categories)), list(new_categories)))
+        ydat = np.array([conv_dict[i] for i in ydat])
+
+        print("Computing confusion matrix")
+        selected_1 = (ydat == new_categories[0]) | (ydat == new_categories[1])
+        X_train, X_test, y_train, y_test = train_test_split(
+            Xdat[selected_1], ydat[selected_1], test_size=0.2, random_state=42
         )
-        ax.set_title(m_titles[mi])
-        ax.xaxis.set_ticks_position("bottom")
-        fig.autofmt_xdate(rotation=0)
-        fig.tight_layout()
-        fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_MINFLUX_ANALYSIS_{mi}.svg"))
-    """
-    print("Computing LDA projection 3D bubbles")
-    learn.Reduce(n_components=1, method="lin")
+        rus = RandomUnderSampler(replacement=False, random_state=42)
+        X_train, y_train = rus.fit_resample(X_train, y_train)
+        learn = ML(X_train, y_train)
+        learn.Train(algorithm='Boost', plot=False)
+        y_pred_btx = learn.Predict(ML(X_test, y_test, center=False))[0]
+        y_pred_btx = [learn.to_string[i] for i in y_pred_btx]
+        m1 = confusion_matrix(y_test, y_pred_btx)
 
-    MLfig = plt.figure(figsize=(6, 6))
-    MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
-    learn.ProjectPlot(axis=MLax, colors=[category_to_colors[category] for category in categories])
-    MLfig.tight_layout()
-    MLfig.savefig("3Dbubbles_fingerprints", dpi=500)
-    """
-    for selected_i, (x,y,cats) in enumerate([[Xdat[selected_1], ydat[selected_1], new_categories[:2]], [Xdat[selected_2], ydat[selected_2], new_categories[-2:]]]):
-        print("Plotting LDA projection 1D")
-        cats = [cat.split(' ')[-1] for cat in cats]
-        colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in cats]
-        cbins = 4  # Discretizes the interpolation into bins
-        cmap_name = "my_list"
-        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
-        norm = matplotlib.colors.Normalize(vmin=-10.0, vmax=10.0)
-        numfeats = 4
-        x = x[:,np.logical_not(np.isnan(x).any(axis=0))]
-        learn = ML(x, y)
-        learn.Reduce("lin", n_components=1)
-
-        learn.clf = learn.T
-        sort = np.argsort(np.abs(learn.clf.coef_[0]))
-        normweight = np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats] / np.max(
-            np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats]
+        selected_2 = (ydat == new_categories[2]) | (ydat == new_categories[3])
+        X_train, X_test, y_train, y_test = train_test_split(
+            Xdat[selected_2], ydat[selected_2], test_size=0.2, random_state=42
         )
-        #
+        rus = RandomUnderSampler(replacement=False, random_state=42)
+        X_train, y_train = rus.fit_resample(X_train, y_train)
+        learn = ML(X_train, y_train)
+        learn.Train(algorithm='Boost', plot=False)
+        y_pred_chol = learn.Predict(ML(X_test, y_test, center=False))[0]
+        y_pred_chol = [learn.to_string[i] for i in y_pred_chol]
+        m2 = confusion_matrix(y_test, y_pred_chol)
 
+        m_titles = [
+            "BTX",
+            "fPEG-Chol"
+        ]
 
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        for mi, m in enumerate([m1,m2]):
+            m = np.round(m/(np.sum(m,axis=1).reshape(2,1)),2)
+            xnames = learn.to_string
+            xnames = [xnames[name_i].split(' ')[-1] for name_i, _ in enumerate(xnames)]
+            ynames = learn.to_string
+            ynames = [ynames[name_i].split(' ')[-1] for name_i, _ in enumerate(ynames)]
 
-        for i, l, c in zip(
-            range(len(cats)),
-            list(cats),
-            [category_to_colors[category] for category in cats],
-        ):
-            print(c)
-            center, count, sy = histogram(
-                learn.X[learn.y == i][:, 0],
-                color=c,
-                bars=True,
-                ax=ax,
-                bins=10,
-                alpha=0.7,
-                range=(-6, 4),
-                normalize=True,
-                elinewidth=2,
-                capsize=2,
-                remove0=True,
-                legend=l,
+            fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+            ax.matshow(m, cmap="Blues")
+            for i in range(m.shape[0]):
+                for j in range(m.shape[0]):
+                    if m[i, j] < np.max(m) / 2:
+                        ax.text(j, i, m[i, j], ha="center", color="black")
+                    else:
+                        ax.text(j, i, m[i, j], ha="center", color="white", fontsize=12)
+            ax.set(
+                yticks=range(0,2),
+                xticks=range(0,2),
+                # title=f"{title}\nf1:{f1:4.4f}\nacc:{acc:4.4f}",
+                xticklabels=[xnames[i] for i in range(0,2)][::-1],
+                yticklabels=[ynames[i] for i in range(0,2)][::-1],
+                xlabel="Predicted label",
+                ylabel="True label",
             )
+            ax.set_title(m_titles[mi])
+            ax.xaxis.set_ticks_position("bottom")
+            fig.autofmt_xdate(rotation=0)
+            fig.tight_layout()
+            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_MINFLUX_ANALYSIS_{mi}_{state}.svg"))
+        """
+        print("Computing LDA projection 3D bubbles")
+        learn.Reduce(n_components=1, method="lin")
 
-            ax.axvline(learn.X[learn.y == i][:, 0].mean(),color=c,linestyle='--', linewidth=3)
-        fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_LINDISC_{selected_i}.svg"))
+        MLfig = plt.figure(figsize=(6, 6))
+        MLax = MLfig.add_subplot(1, 1, 1, projection="3d")
+        learn.ProjectPlot(axis=MLax, colors=[category_to_colors[category] for category in categories])
+        MLfig.tight_layout()
+        MLfig.savefig("3Dbubbles_fingerprints", dpi=500)
+        """
+        for selected_i, (x,y,cats) in enumerate([[Xdat[selected_1], ydat[selected_1], new_categories[:2]], [Xdat[selected_2], ydat[selected_2], new_categories[-2:]]]):
+            print("Plotting LDA projection 1D")
+            cats = [cat.split(' ')[-1] for cat in cats]
+            colors = [matplotlib.colors.to_rgb(category_to_colors[category]) for category in cats]
+            cbins = 4  # Discretizes the interpolation into bins
+            cmap_name = "my_list"
+            cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=cbins)
+            norm = matplotlib.colors.Normalize(vmin=-10.0, vmax=10.0)
+            numfeats = 4
+            x = x[:,np.logical_not(np.isnan(x).any(axis=0))]
+            learn = ML(x, y)
+            learn.Reduce("lin", n_components=1)
+
+            learn.clf = learn.T
+            sort = np.argsort(np.abs(learn.clf.coef_[0]))
+            normweight = np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats] / np.max(
+                np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats]
+            )
+            #
+
+
+            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+
+            for i, l, c in zip(
+                range(len(cats)),
+                list(cats),
+                [category_to_colors[category] for category in cats],
+            ):
+                print(c)
+                center, count, sy = histogram(
+                    learn.X[learn.y == i][:, 0],
+                    color=c,
+                    bars=True,
+                    ax=ax,
+                    bins=10,
+                    alpha=0.7,
+                    range=(-6, 4),
+                    normalize=True,
+                    elinewidth=2,
+                    capsize=2,
+                    remove0=True,
+                    legend=l,
+                )
+
+                ax.axvline(learn.X[learn.y == i][:, 0].mean(),color=c,linestyle='--', linewidth=3)
+            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_LINDISC_{selected_i}_{state}.svg"))
+            plt.clf()
+            print("Computing ranked feature-plot")
+            learn = ML(x, y)
+            learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:-5]))
+            from matplotlib.lines import Line2D
+
+            custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in cats]
+            plt.legend(custom_lines, cats, loc="upper center")
+            plt.tight_layout()
+            plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_FEATURE_RANKING_{selected_i}_{state}.svg"))
+            plt.clf()
+
+        """
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+        umap_object_0 = umap.UMAP()
+        umap_object_1 = umap.UMAP()
+
+        umap_object_0.fit(Xdat[selected_1][ydat[selected_1]=='CF®680R-BTX'])
+        umap_object_1.fit(Xdat[selected_1][ydat[selected_1]=='fPEG-Chol'])
+
+        embeddings_0 = umap_object_0.transform(Xdat[selected_1][ydat[selected_1]=='CF®680R-BTX'])
+        embeddings_1 = umap_object_1.transform(Xdat[selected_1][ydat[selected_1]=='fPEG-Chol'])
+
+        ax[0].scatter(embeddings_0[:,0], embeddings_0[:,1], c='red')
+        ax[1].scatter(embeddings_1[:,0], embeddings_1[:,1], c='grey')
+
+        embeddings_0 = umap_object_0.transform(Xdat[selected_2][new_ydat=='CF®680R-BTX'])
+        embeddings_1 = umap_object_1.transform(Xdat[selected_2][new_ydat=='fPEG-Chol'])
+
+        ax[0].scatter(embeddings_0[:,0], embeddings_0[:,1], c='black')
+        ax[1].scatter(embeddings_1[:,0], embeddings_1[:,1], c='black')
+
+        plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_UMAP.svg"))
         plt.clf()
-        print("Computing ranked feature-plot")
-        learn = ML(x, y)
-        learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:-5]))
-        from matplotlib.lines import Line2D
-
-        custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in cats]
-        plt.legend(custom_lines, cats, loc="upper center")
-        plt.tight_layout()
-        plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_FEATURE_RANKING_{selected_i}.svg"))
-        plt.clf()
-
-    """
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-
-    umap_object_0 = umap.UMAP()
-    umap_object_1 = umap.UMAP()
-
-    umap_object_0.fit(Xdat[selected_1][ydat[selected_1]=='CF®680R-BTX'])
-    umap_object_1.fit(Xdat[selected_1][ydat[selected_1]=='fPEG-Chol'])
-
-    embeddings_0 = umap_object_0.transform(Xdat[selected_1][ydat[selected_1]=='CF®680R-BTX'])
-    embeddings_1 = umap_object_1.transform(Xdat[selected_1][ydat[selected_1]=='fPEG-Chol'])
-
-    ax[0].scatter(embeddings_0[:,0], embeddings_0[:,1], c='red')
-    ax[1].scatter(embeddings_1[:,0], embeddings_1[:,1], c='grey')
-
-    embeddings_0 = umap_object_0.transform(Xdat[selected_2][new_ydat=='CF®680R-BTX'])
-    embeddings_1 = umap_object_1.transform(Xdat[selected_2][new_ydat=='fPEG-Chol'])
-
-    ax[0].scatter(embeddings_0[:,0], embeddings_0[:,1], c='black')
-    ax[1].scatter(embeddings_1[:,0], embeddings_1[:,1], c='black')
-
-    plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_UMAP.svg"))
-    plt.clf()
-    """
+        """
