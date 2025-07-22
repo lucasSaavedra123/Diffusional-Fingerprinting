@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
             fingerprints = []
             labels = []
-            #fingerprints_ids = []
+            fingerprints_ids = []
 
             for category_id, category in enumerate(categories):
                 queries[category].update({'info.immobile': False})
@@ -104,22 +104,23 @@ if __name__ == "__main__":
                 for fingerprint in tqdm(query_fingerprints):
                     if 'fingerprint' in fingerprint['info']:
                         del fingerprint['info']['fingerprint']['full']
-                        new_fingerprints = fingerprint['info']['fingerprint'][state]
+                        fingerprints_info = fingerprint['info']['fingerprint'][state]
+                        new_fingerprints = [info['fingerprint'] for info in fingerprints_info]
                         fingerprints.extend(new_fingerprints)
                         labels.extend([category_id] * len(new_fingerprints))
-                        #fingerprints_ids.extend([str(fingerprint['_id'])] * len(fingerprint['info']['fingerprint']))
+                        fingerprints_ids.extend([(str(fingerprint['_id']), info['sub_trace_i']) for info in fingerprints_info])
 
             DatabaseHandler.disconnect()
 
             np.save(f"{state}_X_fingerprints_MINFLUX", np.array(fingerprints))
             np.save(f"{state}_y_MINFLUX", np.array(labels))
-            #np.save("traj_ids", np.array(fingerprints_ids))
+            np.save(f"{state}_traj_ids", np.array(fingerprints_ids))
 
         """Train classifiers to obtain insights"""
         Xdat = np.load(f"{state}_X_fingerprints_MINFLUX.npy")
         Xdat = Xdat[:, :-5]
         ydat = np.load(f"{state}_y_MINFLUX.npy")
-        #fingerprints_ids = np.load("traj_ids.npy")
+        fingerprints_ids = np.load(f"{state}_traj_ids.npy")
         conv_dict = dict(zip(range(len(categories)), list(categories)))
         ydat = np.array([conv_dict[i] for i in ydat])
 
@@ -137,7 +138,7 @@ if __name__ == "__main__":
         m1 = confusion_matrix(y_test, y_pred_isolated)
 
         selected_2 = (ydat == categories[2]) | (ydat == categories[3])
-        #fingerprints_ids = fingerprints_ids[selected_2]
+        fingerprints_ids = fingerprints_ids[selected_2]
         new_ydat = ydat[selected_2]
         new_ydat[new_ydat == categories[2]] = categories[0]
         new_ydat[new_ydat == categories[3]] = categories[1]
@@ -246,21 +247,20 @@ if __name__ == "__main__":
             plt.tight_layout()
             plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_FEATURE_RANKING_{selected_i}_{state}.svg"))
             plt.clf()
-        """
+
         classification_result = defaultdict(list)
-        for fing_id, classification in zip(fingerprints_ids, zip(new_ydat,y_pred_simultaneous)):
-            classification_result[fing_id].append(classification)
-        """
-        """
+        for (fing_id,sub_trace_id), classification in zip(fingerprints_ids, zip(new_ydat,y_pred_simultaneous)):
+            classification_result[fing_id].append({'sub_trace_i': sub_trace_id, 'classification': classification})
+
         DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
         for fing_id in tqdm(classification_result):
             trajectories = Trajectory.objects(id=fing_id)
             assert len(trajectories) == 1
             trajectory = trajectories[0]
-            trajectory.info['analysis']['predictions_on_each_100_segments'] = classification_result[fing_id]
+            trajectory.info['analysis'][f'predictions_on_each_{state}_segments'] = classification_result[fing_id]
             trajectory.save()
         DatabaseHandler.disconnect()
-        """
+
         """
         fig, ax = plt.subplots(1, 2, figsize=(12, 6))
 
