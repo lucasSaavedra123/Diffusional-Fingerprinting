@@ -64,10 +64,10 @@ def calculate_and_save_fingerprint_for_id(arguments):
             trace.info['fingerprint'][state] = []
             states = trace.info['analysis'][f'{state}-states-deepspt']
 
-            for sub_trace in trace.sub_trajectories_trajectories_from_confinement_states(custom_states=states)[1]:
+            for sub_trace_i, sub_trace in enumerate(trace.sub_trajectories_trajectories_from_confinement_states(custom_states=states)[1]):
                 try:
                     calculate_msd_parameters(sub_trace, max_t=0.0066)
-                    trace.info['fingerprint'][state].append(get_trajectory_fingerprint(sub_trace))
+                    trace.info['fingerprint'][state].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(sub_trace)})
                 except AssertionError:
                     pass
         trace.save()
