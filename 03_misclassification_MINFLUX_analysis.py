@@ -40,25 +40,25 @@ if __name__ == "__main__":
     states = ['normal', 'directed', 'confinement', 'subdifussive']
     for state in states:
         new_categories = [
-            'CF®680R-BTX(+fPEG-Chol) No Misclassified',
+            'CF®680R-BTX(+fPEG-Chol) NoMisclassified',
             'CF®680R-BTX(+fPEG-Chol) Misclassified',
-            'fPEG-Chol(+CF®680R-BTX) No Misclassified',
+            'fPEG-Chol(+CF®680R-BTX) NoMisclassified',
             'fPEG-Chol(+CF®680R-BTX) Misclassified',
         ]
 
         category_to_colors = {
-            'CF®680R-BTX(+fPEG-Chol) No Misclassified':'darkgray',
-            'CF®680R-BTX(+fPEG-Chol) Misclassified':'darkred',
-            'fPEG-Chol(+CF®680R-BTX) No Misclassified':'darkgreen',
+            'CF®680R-BTX(+fPEG-Chol) NoMisclassified':'darkgray',
+            'CF®680R-BTX(+fPEG-Chol) Misclassified':'purple',
+            'fPEG-Chol(+CF®680R-BTX) NoMisclassified':'darkgreen',
             'fPEG-Chol(+CF®680R-BTX) Misclassified':'darkorange',
         }
 
         category_to_colors = {
-            'No Misclassified':'darkgray',
-            'Misclassified':'darkred',
+            'NoMisclassified':'darkgray',
+            'Misclassified':'purple',
         }
 
-        categories_labels = ['Misclassified', 'No Misclassified']
+        categories_labels = ['Misclassified', 'NoMisclassified']
 
         """Get fingerprints"""
         if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}.npy"):
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
                                 if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
                                     new_fingerprints.append(raw_fingerprint)
-                                if sub_category == 'No Misclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
+                                if sub_category == 'NoMisclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
                                     new_fingerprints.append(raw_fingerprint)
 
                             fingerprints.extend(new_fingerprints)
