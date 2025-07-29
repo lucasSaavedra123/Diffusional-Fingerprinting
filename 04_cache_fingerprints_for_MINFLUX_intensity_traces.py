@@ -55,6 +55,8 @@ def calculate_and_save_fingerprint_for_id(arguments):
 
     if 'intensity' not in trace.info:
         return
+    if 'fingerprint' not in trace.info:
+        return
 
     try:
         for state in [0,1,2,3,4]:
