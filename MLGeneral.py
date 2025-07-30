@@ -1445,7 +1445,7 @@ class ML:
             plt.show()
         return predict, probact
 
-    def Feature_rank(self, savefig=None, show=False, nbins=30, numfeats=5, names=None):
+    def Feature_rank(self, return_ranking=False, savefig=None, show=False, nbins=30, numfeats=5, names=None):
         X, y = self.X, self.y
         Xdat, ydat = self.X, self.y
         if names is None:
@@ -1492,6 +1492,8 @@ class ML:
             np.abs(learn.clf.coef_[0][sort])[::-1][:numfeats]
         )
 
+        if return_ranking:
+            return sort[::-1][:numfeats], normweight
         #
         # colors = ["darkred","darkgreen","dimgrey"]
         nbins = nbins

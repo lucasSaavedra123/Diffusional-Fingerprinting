@@ -61,44 +61,43 @@ if __name__ == "__main__":
         categories_labels = ['Misclassified', 'NoMisclassified']
 
         """Get fingerprints"""
-        if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}.npy"):
-            DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+        DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
-            queries = {
-                'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
-                'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
-            }
+        queries = {
+            'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+            'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
+        }
 
-            fingerprints = []
-            labels = []
-            #['analysis']['fingerprint_anomaly'][0/1]
-            for category_id, category in enumerate(categories):
-                query_fingerprints = Trajectory._get_collection().find(queries[category],
-                    {
-                        f'info.analysis.predictions_on_each_{state}_segments': 1,
-                        f'info.fingerprint.{state}': 1
-                    })
+        fingerprints = []
+        labels = []
+        #['analysis']['fingerprint_anomaly'][0/1]
+        for category_id, category in enumerate(categories):
+            query_fingerprints = Trajectory._get_collection().find(queries[category],
+                {
+                    f'info.analysis.predictions_on_each_{state}_segments': 1,
+                    f'info.fingerprint.{state}': 1
+                })
 
-                for fingerprint in tqdm(query_fingerprints):
-                    if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
-                        for sub_category_i, sub_category in enumerate(categories_labels):
-                            new_fingerprints = []
+            for fingerprint in tqdm(query_fingerprints):
+                if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
+                    for sub_category_i, sub_category in enumerate(categories_labels):
+                        new_fingerprints = []
 
-                            for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
-                                raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
+                        for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
+                            raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
 
-                                if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
-                                    new_fingerprints.append(raw_fingerprint)
-                                if sub_category == 'NoMisclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
-                                    new_fingerprints.append(raw_fingerprint)
+                            if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
+                                new_fingerprints.append(raw_fingerprint)
+                            if sub_category == 'NoMisclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
+                                new_fingerprints.append(raw_fingerprint)
 
-                            fingerprints.extend(new_fingerprints)
-                            labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
+                        fingerprints.extend(new_fingerprints)
+                        labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
 
-            DatabaseHandler.disconnect()
+        DatabaseHandler.disconnect()
 
-            np.save(f"X_fingerprints_MINFLUX_anomaly_{state}", np.array(fingerprints))
-            np.save(f"y_MINFLUX_anomaly_{state}", np.array(labels))
+        np.save(f"X_fingerprints_MINFLUX_anomaly_{state}", np.array(fingerprints))
+        np.save(f"y_MINFLUX_anomaly_{state}", np.array(labels))
 
         """Train classifiers to obtain insights"""
         Xdat = np.load(f"X_fingerprints_MINFLUX_anomaly_{state}.npy")[:,:-5]
@@ -164,7 +163,7 @@ if __name__ == "__main__":
             ax.xaxis.set_ticks_position("bottom")
             fig.autofmt_xdate(rotation=0)
             fig.tight_layout()
-            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_MINFLUX_ANALYSIS_{mi}_{state}.svg"))
+            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"03_MINFLUX_ANALYSIS_{mi}_{state}.svg"))
         """
         print("Computing LDA projection 3D bubbles")
         learn.Reduce(n_components=1, method="lin")
@@ -220,17 +219,52 @@ if __name__ == "__main__":
                 )
 
                 ax.axvline(learn.X[learn.y == i][:, 0].mean(),color=c,linestyle='--', linewidth=3)
-            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_LINDISC_{selected_i}_{state}.svg"))
+            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"03_LINDISC_{selected_i}_{state}.svg"))
             plt.clf()
             print("Computing ranked feature-plot")
             learn = ML(x, y)
-            learn.Feature_rank(numfeats=5, names=np.array(get_feature_names()[:-5]))
-            from matplotlib.lines import Line2D
+            feature_names = get_feature_names()[:-5]
+            features_ranked, ranking_score = learn.Feature_rank(numfeats=5, names=np.array(feature_names), return_ranking=True)
 
-            custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in cats]
-            plt.legend(custom_lines, cats, loc="upper center")
+            fig, ax = plt.subplots(5, 1, figsize=(10, 10))
+
+            for rank_i, feature in enumerate(features_ranked):
+                minT = np.min(x[:, feature])
+                maxT = np.max(x[:, feature])
+
+                nbins = int(np.ceil(np.log2(len(x[:, feature])) + 1))
+
+                for cat_value in np.unique(y):
+                    dat = x[:, feature][y == cat_value]
+
+                    ax[rank_i].hist(
+                        dat,
+                        bins=100,
+                        range=(minT, maxT),
+                        density=True,
+                        alpha=0.75,
+                        orientation='vertical',
+                        color=category_to_colors[cat_value.split(' ')[-1]]
+                    )
+
+                    ax[rank_i].set_ylabel(feature_names[feature], fontsize=30)
+                    ax[rank_i].set_xticks([])
+                    ax[rank_i].set_yticks([])
+
+                    ax[rank_i].text(
+                        0.98, 0.95,              # Cerca de la esquina superior derecha
+                        str(np.round(ranking_score[rank_i],2)),         # El texto que querés mostrar
+                        ha='right',              # Alineado horizontal: derecha
+                        va='top',                # Alineado vertical: arriba
+                        fontsize=30,
+                        transform=ax[rank_i].transAxes   # ← Usa sistema de coordenadas del eje (0–1)
+                    )
+
+            ax[-1].set_xlabel("Normalized Feature Value", fontsize=30)
+            #custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in cats]
+            #plt.legend(custom_lines, cats, loc="upper center")
             plt.tight_layout()
-            plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"07_FEATURE_RANKING_{selected_i}_{state}.svg"))
+            plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"03_FEATURE_RANKING_{selected_i}_{state}.svg"))
             plt.clf()
 
         """
