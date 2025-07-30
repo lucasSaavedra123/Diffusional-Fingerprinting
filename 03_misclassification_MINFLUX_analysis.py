@@ -61,43 +61,44 @@ if __name__ == "__main__":
         categories_labels = ['Misclassified', 'NoMisclassified']
 
         """Get fingerprints"""
-        DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+        if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}"):
+            DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
-        queries = {
-            'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
-            'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
-        }
+            queries = {
+                'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+                'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
+            }
 
-        fingerprints = []
-        labels = []
-        #['analysis']['fingerprint_anomaly'][0/1]
-        for category_id, category in enumerate(categories):
-            query_fingerprints = Trajectory._get_collection().find(queries[category],
-                {
-                    f'info.analysis.predictions_on_each_{state}_segments': 1,
-                    f'info.fingerprint.{state}': 1
-                })
+            fingerprints = []
+            labels = []
+            #['analysis']['fingerprint_anomaly'][0/1]
+            for category_id, category in enumerate(categories):
+                query_fingerprints = Trajectory._get_collection().find(queries[category],
+                    {
+                        f'info.analysis.predictions_on_each_{state}_segments': 1,
+                        f'info.fingerprint.{state}': 1
+                    })
 
-            for fingerprint in tqdm(query_fingerprints):
-                if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
-                    for sub_category_i, sub_category in enumerate(categories_labels):
-                        new_fingerprints = []
+                for fingerprint in tqdm(query_fingerprints):
+                    if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
+                        for sub_category_i, sub_category in enumerate(categories_labels):
+                            new_fingerprints = []
 
-                        for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
-                            raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
+                            for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
+                                raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
 
-                            if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
-                                new_fingerprints.append(raw_fingerprint)
-                            if sub_category == 'NoMisclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
-                                new_fingerprints.append(raw_fingerprint)
+                                if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
+                                    new_fingerprints.append(raw_fingerprint)
+                                if sub_category == 'NoMisclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
+                                    new_fingerprints.append(raw_fingerprint)
 
-                        fingerprints.extend(new_fingerprints)
-                        labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
+                            fingerprints.extend(new_fingerprints)
+                            labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
 
-        DatabaseHandler.disconnect()
+            DatabaseHandler.disconnect()
 
-        np.save(f"X_fingerprints_MINFLUX_anomaly_{state}", np.array(fingerprints))
-        np.save(f"y_MINFLUX_anomaly_{state}", np.array(labels))
+            np.save(f"X_fingerprints_MINFLUX_anomaly_{state}", np.array(fingerprints))
+            np.save(f"y_MINFLUX_anomaly_{state}", np.array(labels))
 
         """Train classifiers to obtain insights"""
         Xdat = np.load(f"X_fingerprints_MINFLUX_anomaly_{state}.npy")[:,:-5]
@@ -226,7 +227,7 @@ if __name__ == "__main__":
             feature_names = get_feature_names()[:-5]
             features_ranked, ranking_score = learn.Feature_rank(numfeats=5, names=np.array(feature_names), return_ranking=True)
 
-            fig, ax = plt.subplots(5, 1, figsize=(10, 10))
+            fig, ax = plt.subplots(5, 1, figsize=(5, 10))
 
             for rank_i, feature in enumerate(features_ranked):
                 minT = np.min(x[:, feature])
@@ -263,7 +264,7 @@ if __name__ == "__main__":
             ax[-1].set_xlabel("Normalized Feature Value", fontsize=30)
             #custom_lines = [Line2D([0], [0], color=category_to_colors[category], lw=4) for category in cats]
             #plt.legend(custom_lines, cats, loc="upper center")
-            plt.tight_layout()
+            #plt.tight_layout()
             plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"03_FEATURE_RANKING_{selected_i}_{state}.svg"))
             plt.clf()
 
