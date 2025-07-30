@@ -61,7 +61,7 @@ if __name__ == "__main__":
         categories_labels = ['Misclassified', 'NoMisclassified']
 
         """Get fingerprints"""
-        if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}"):
+        if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}.npy"):
             DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
             queries = {
@@ -227,7 +227,7 @@ if __name__ == "__main__":
             feature_names = get_feature_names()[:-5]
             features_ranked, ranking_score = learn.Feature_rank(numfeats=5, names=np.array(feature_names), return_ranking=True)
 
-            fig, ax = plt.subplots(5, 1, figsize=(5, 10))
+            fig, ax = plt.subplots(5, 1, figsize=(6, 11))
 
             for rank_i, feature in enumerate(features_ranked):
                 minT = np.min(x[:, feature])
