@@ -81,6 +81,14 @@ if __name__ == "__main__":
         4:'black',
     }
 
+    new_categories = [
+        'State 0',
+        'State 1',
+        'State 2',
+        'State 3',
+        'State 4',
+    ]
+
     queries = {
         'CF®680R-BTX':{'info.dataset':'BTX680R'},
         'BTX640R':{'info.dataset':'Control'},
@@ -112,16 +120,16 @@ if __name__ == "__main__":
 
             DatabaseHandler.disconnect()
 
-            np.save(f"X_fingerprints_MINFLUX_{category}", np.array(fingerprints))
-            np.save(f"y_MINFLUX_{category}", np.array(labels))
-            np.save(f"traj_ids_{category}", np.array(fingerprints_ids))
+            np.save(f"X_fingerprints_MINFLUX_intensity_{category}", np.array(fingerprints))
+            np.save(f"y_MINFLUX_intensity_{category}", np.array(labels))
+            np.save(f"traj_ids_intensity_{category}", np.array(fingerprints_ids))
 
         """Train classifiers to obtain insights"""
-        Xdat = np.load(f"X_fingerprints_MINFLUX_{category}.npy")
+        Xdat = np.load(f"X_fingerprints_MINFLUX_intensity_{category}.npy")
         Xdat = Xdat[:, :-5]
-        ydat = np.load(f"y_MINFLUX_{category}.npy")
-        fingerprints_ids = np.load(f"traj_ids_{category}.npy")
-        conv_dict = dict(zip(range(5), [f'St. {state}' for state in range(5)]))
+        ydat = np.load(f"y_MINFLUX_intensity_{category}.npy")
+        fingerprints_ids = np.load(f"traj_ids_intensity_{category}.npy")
+        conv_dict = dict(zip(range(5), new_categories))
         ydat = np.array([conv_dict[i] for i in ydat])
 
         print("Computing confusion matrix")
@@ -165,7 +173,7 @@ if __name__ == "__main__":
             ax.xaxis.set_ticks_position("bottom")
             fig.autofmt_xdate(rotation=0)
             fig.tight_layout()
-            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_MINFLUX_ANALYSIS_{m_titles[mi]}_intensities_levels.svg"))
+            fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"05_MINFLUX_ANALYSIS_{m_titles[mi]}_intensities_levels.svg"))
 
 
         print("Plotting LDA projection 1D")
@@ -195,7 +203,7 @@ if __name__ == "__main__":
 
         for i, l, c in zip(
             range(5),
-            [f'St. {state}' for state in range(5)],
+            new_categories,
             [category_to_colors[state] for state in range(5)],
         ):
             print(c)
@@ -216,8 +224,10 @@ if __name__ == "__main__":
 
             ax.set_xlim([-20,20])
             ax.axvline(learn.X[learn.y == i][:, 0].mean(),color=c,linestyle='--', linewidth=3)
-        fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_LINDISC_{category}_intensities.svg"))
+        fig.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"05_LINDISC_{category}_intensities.svg"))
         plt.clf()
+
+        continue
 
         print("Computing ranked feature-plot")
         learn = ML(x, y)
@@ -225,12 +235,10 @@ if __name__ == "__main__":
         from matplotlib.lines import Line2D
 
         custom_lines = [Line2D([0], [0], color=category_to_colors[state], lw=4) for state in range(5)]
-        plt.legend(custom_lines, [f'St. {state}' for state in range(5)], loc="upper center")
+        plt.legend(custom_lines, new_categories, loc="upper center")
         plt.tight_layout()
-        plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"02_FEATURE_RANKING_{category}_intensities.svg"))
+        plt.savefig(os.path.join(PROJECT_PATH, 'Graphics/Matplotlib', f"05_FEATURE_RANKING_{category}_intensities.svg"))
         plt.clf()
-
-        continue
 
         classification_result = defaultdict(list)
         for (fing_id,sub_trace_id), classification in zip(fingerprints_ids, zip(new_ydat,y_pred_simultaneous)):
