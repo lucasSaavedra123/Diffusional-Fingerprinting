@@ -55,7 +55,8 @@ def calculate_and_save_fingerprint_for_id(arguments):
     trace = trace[0]
     try:
         if 'clustered_state' in trace.info['analysis']:
-            clustered = np.sum(trace.info['analysis']['clustered_state']) > trace.length
+            clustered_steps = np.sum(trace.info['analysis']['clustered_state'])
+            clustered = clustered_steps > (trace.length//2)
             fingerprint_label = 'clustered' if clustered else 'not_clustered'
             calculate_msd_parameters(trace, 0.50)
             trace.info[f'fingerprint_{fingerprint_label}'] = get_trajectory_fingerprint(trace)
