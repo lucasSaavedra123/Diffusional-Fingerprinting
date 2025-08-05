@@ -53,16 +53,24 @@ def calculate_and_save_fingerprint_for_id(arguments):
     trace = Trajectory.objects(id=trace_id)
     assert len(trace) == 1
     trace = trace[0]
-    try:
-        if 'clustered_state' in trace.info['analysis']:
-            clustered_steps = np.sum(trace.info['analysis']['clustered_state'])
-            clustered = clustered_steps > (trace.length//2)
-            fingerprint_label = 'clustered' if clustered else 'not_clustered'
-            calculate_msd_parameters(trace, 0.50)
-            trace.info[f'fingerprint_{fingerprint_label}'] = get_trajectory_fingerprint(trace)
-            trace.save()
-    except AssertionError:
-        pass
+
+    trace.info[f'fingerprint_unclustered'] = []
+    trace.info[f'fingerprint_clustered'] = []
+
+    if 'clustered_state' in trace.info['analysis']:
+        for category_i, state in enumerate(['unclustered', 'clustered']):
+            trace.info[f'fingerprint_{state}'] = []
+            for sub_trace in trace.sub_trajectories_trajectories_from_confinement_states(custom_states=trace.info['analysis']['clustered_state'])[category_i]:
+                try:
+                    calculate_msd_parameters(sub_trace, 0.50)
+                    trace.info[f'fingerprint_{state}'].append(get_trajectory_fingerprint(sub_trace))
+                except AssertionError:
+                    pass
+                except IndexError:
+                    pass
+
+    trace.save()
+
     DatabaseHandler.disconnect()
 
     if USE_POOL:

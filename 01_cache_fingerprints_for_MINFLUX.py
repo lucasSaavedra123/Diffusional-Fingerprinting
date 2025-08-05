@@ -55,6 +55,7 @@ def calculate_and_save_fingerprint_for_id(arguments):
     try:
         calculate_msd_parameters(trace)
         trace.info['fingerprint'] = {}
+        trace.info['fingerprint_undersampled'] = {}
         trace.info['fingerprint']['full'] = get_trajectory_fingerprint(trace)
         delete_fields = ['t_vec', 'msd', 'd', 'betha', 'precision', 'goodness_of_fit']
         for field in delete_fields:
@@ -62,12 +63,16 @@ def calculate_and_save_fingerprint_for_id(arguments):
 
         for state in ['normal', 'directed', 'confinement', 'subdifussive']:
             trace.info['fingerprint'][state] = []
+            trace.info['fingerprint_undersampled'][state] = []
             states = trace.info['analysis'][f'{state}-states-deepspt']
 
             for sub_trace_i, sub_trace in enumerate(trace.sub_trajectories_trajectories_from_confinement_states(custom_states=states)[1]):
                 try:
                     calculate_msd_parameters(sub_trace, max_t=0.0066)
                     trace.info['fingerprint'][state].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(sub_trace)})
+                    undersampled_trace = trace.undersample(0.010) #Match STORM resolution
+                    calculate_msd_parameters(undersampled_trace, max_t= 0.50)
+                    trace.info['fingerprint_undersampled'][state].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(undersampled_trace)})
                 except AssertionError:
                     pass
         trace.save()
