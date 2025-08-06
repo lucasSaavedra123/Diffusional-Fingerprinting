@@ -61,6 +61,7 @@ def calculate_and_save_fingerprint_for_id(arguments):
     try:
         for state in [0,1,2,3,4]:
             trace.info['fingerprint']['dgn_state_'+str(state)] = []
+            trace.info['fingerprint_undersampled']['dgn_state_'+str(state)] = []
             if f'eco_state_{state}' not in trace.info['analysis']:
                 continue
             states = trace.info['analysis'][f'eco_state_{state}']
@@ -69,6 +70,9 @@ def calculate_and_save_fingerprint_for_id(arguments):
                 try:
                     calculate_msd_parameters(sub_trace, max_t=0.0066)
                     trace.info['fingerprint']['dgn_state_'+str(state)].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(sub_trace)})
+                    undersampled_trace = sub_trace.undersample(0.010) #Match STORM resolution
+                    calculate_msd_parameters(undersampled_trace, max_t=0.50)
+                    trace.info['fingerprint_undersampled']['dgn_state_'+str(state)].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(undersampled_trace)})
                 except AssertionError:
                     pass
         trace.save()
