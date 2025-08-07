@@ -10,9 +10,9 @@ from traj_fingerprint.Features import get_trajectory_fingerprint
 
 USE_POOL = True
 
-def calculate_msd_parameters(traj, max_t=0.050):
-    DELTA_T = 0.000132
-    TIME_START = 0.000084
+def calculate_msd_parameters(traj, max_t=0.050, undersampled=False):
+    DELTA_T = 0.000132 if not undersampled else 0.010
+    TIME_START = 0.000084 if not undersampled else 0.010
     MAX_T = max_t
 
     t_vec, msd, d, betha, precision, goodness_of_fit = traj.temporal_average_mean_squared_displacement(
@@ -43,8 +43,9 @@ def cache_msd_info(traces):
 
 def calculate_and_save_fingerprint_for_id(arguments):
     worker_i, trace_id = arguments
+    logger = multiprocessing.get_logger()
+
     if USE_POOL:
-        logger = multiprocessing.get_logger()
         start_time = time.time()
         logger.info(f"Worker {worker_i}/{trace_id} started at {start_time}")
 
@@ -71,8 +72,10 @@ def calculate_and_save_fingerprint_for_id(arguments):
                     calculate_msd_parameters(sub_trace, max_t=0.0066)
                     trace.info['fingerprint']['dgn_state_'+str(state)].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(sub_trace)})
                     undersampled_trace = sub_trace.undersample(0.010) #Match STORM resolution
-                    calculate_msd_parameters(undersampled_trace, max_t=0.50)
+                    logger.info(f"Worker {worker_i}/{trace_id} Undersampled length {undersampled_trace.length}, {sub_trace.duration/0.010}")
+                    calculate_msd_parameters(undersampled_trace, max_t= 0.50, undersampled=True)
                     trace.info['fingerprint_undersampled']['dgn_state_'+str(state)].append({'sub_trace_i': sub_trace_i, 'fingerprint': get_trajectory_fingerprint(undersampled_trace)})
+                    logger.info(f"Worker {worker_i}/{trace_id} Completed")
                 except AssertionError:
                     pass
         trace.save()
