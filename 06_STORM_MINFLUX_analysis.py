@@ -21,6 +21,7 @@ if __name__ == "__main__":
     fingerprints = []
     labels = []
 
+    """
     clustered_fingerprints = Trajectory._get_collection().find({}, {f'info.fingerprint_clustered':1})
     not_clustered_fingerprints = Trajectory._get_collection().find({}, {f'info.fingerprint_unclustered':1})
 
@@ -33,6 +34,18 @@ if __name__ == "__main__":
         if 'fingerprint_unclustered' in fingerprint['info'] and 0 < len(fingerprint['info']['fingerprint_unclustered']):
             fingerprints.extend(fingerprint['info']['fingerprint_unclustered'])
             labels += len(fingerprint['info']['fingerprint_unclustered'])*['unclustered']
+    """
+
+    raw_fingerprints = Trajectory._get_collection().find(
+        {'info.immobile':False},
+        {f'info.fingerprint_full':1,'info.analysis.clustered_state':1}
+    )
+
+    for info in raw_fingerprints:
+        if 'analysis' in info['info'] and 'fingerprint_full' in info['info'] and 'clustered_state' in info['info']['analysis']:
+            fingerprints.append(info['info']['fingerprint_full'])
+            label = (np.sum(info['info']['analysis']['clustered_state']) > (len(info['info']['analysis']['clustered_state'])//2)).astype(int)
+            labels.append('clustered' if label == 1 else 'unclustered')
 
     DatabaseHandler.disconnect()
 
@@ -46,8 +59,10 @@ if __name__ == "__main__":
 
     labels = np.array(labels)
 
+    print(fingerprints.shape, labels.shape)
+
     X_train, X_test, y_train, y_test = train_test_split(
-        fingerprints, labels, test_size=0.2, shuffle=True, random_state=42
+        fingerprints, labels, test_size=0.10, shuffle=True, random_state=42
     )
 
     rus = RandomUnderSampler(replacement=False, random_state=42)
@@ -64,37 +79,31 @@ if __name__ == "__main__":
     plt.show()
 
     DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
-    #Classify Fingerprints by Regime
-    states = ['normal', 'directed', 'confinement', 'subdifussive']
 
-    for state in states:
-        queries = {
-            'CF®680R-BTX':{'info.dataset':'BTX680R'},
-            'BTX640R':{'info.dataset':'Control'},
-            'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
-        }
+    queries = {
+        'CF®680R-BTX':{'info.dataset':'BTX680R'},
+        'BTX640R':{'info.dataset':'Control'},
+        'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+    }
 
-        for category_id, category in enumerate(queries):
-            fingerprints_by_state = {state: [] for state in states}
+    for category_id, category in enumerate(queries):
+        fingerprints = []
+        queries[category].update({'info.immobile': False})
+        query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint.undersampled':1})
+        for fingerprint in tqdm(query_fingerprints):
+            if 'fingerprint' in fingerprint['info'] and 'undersampled' in fingerprint['info']['fingerprint']:
+                fingerprints = []
+                fingerprints.append(fingerprint['info']['fingerprint']['undersampled'])
+                fingerprints = np.array(fingerprints)
+                fingerprints = fingerprints[:, :-5]
+                fingerprints = fingerprints[:, kept_fingerprints]
+                fingerprints = fingerprints.astype(float)
 
-            queries[category].update({'info.immobile': False})
-            query_fingerprints = Trajectory._get_collection().find(queries[category], {f'info.fingerprint_undersampled':1})
-            for fingerprint in query_fingerprints:
-                if 'fingerprint_undersampled' in fingerprint['info']:
-                    fingerprints_info = fingerprint['info']['fingerprint_undersampled'][state]
-                    new_fingerprints = [info['fingerprint'] for info in fingerprints_info]
-                    fingerprints_by_state[state].extend(new_fingerprints)
+                prediction = learn.Predict(ML(fingerprints, np.zeros((len(fingerprints))), center=False))[0]
+                prediction = [learn.to_string[i] for i in prediction][0]
 
-            fingerprints_by_state[state] = np.array(fingerprints_by_state[state])
+                traj = Trajectory.objects(id=fingerprint['_id'])[0]
+                traj.info['analysis']['storm_based_analysis_cluster'] = prediction
+                traj.save()
 
-            fingerprints_by_state[state] = fingerprints_by_state[state][:, :-5]
-            fingerprints_by_state[state] = fingerprints_by_state[state].astype(float)
-
-            fingerprints = fingerprints_by_state[state][:, kept_fingerprints]
-
-            prediction = learn.Predict(ML(fingerprints, np.zeros((len(fingerprints))), center=False))[0]
-            prediction = [learn.to_string[i] for i in prediction]
-            print(category, state, int(100*Counter(prediction)['clustered']/len(prediction)))
-
-    #Classify Fingerprints by State
     DatabaseHandler.disconnect()
