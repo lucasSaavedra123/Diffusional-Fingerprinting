@@ -12,9 +12,7 @@ from scipy.spatial import ConvexHull
 import scipy.stats as st
 import matplotlib.animation as animation
 from collections import defaultdict
-import moviepy.editor as mp
-from moviepy.video.fx.all import crop
-from moviepy.editor import *
+
 
 #Example about how to read trajectories from .mat
 """
