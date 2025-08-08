@@ -54,20 +54,26 @@ def calculate_and_save_fingerprint_for_id(arguments):
     assert len(trace) == 1
     trace = trace[0]
 
-    trace.info[f'fingerprint_unclustered'] = []
-    trace.info[f'fingerprint_clustered'] = []
+    try:
+        calculate_msd_parameters(trace, 0.50)
 
-    if 'clustered_state' in trace.info['analysis']:
-        for category_i, state in enumerate(['unclustered', 'clustered']):
-            trace.info[f'fingerprint_{state}'] = []
-            for sub_trace in trace.sub_trajectories_trajectories_from_confinement_states(custom_states=trace.info['analysis']['clustered_state'])[category_i]:
-                try:
-                    calculate_msd_parameters(sub_trace, 0.50)
-                    trace.info[f'fingerprint_{state}'].append(get_trajectory_fingerprint(sub_trace))
-                except AssertionError:
-                    pass
-                except IndexError:
-                    pass
+        trace.info[f'fingerprint_unclustered'] = []
+        trace.info[f'fingerprint_clustered'] = []
+        trace.info[f'fingerprint_full'] = get_trajectory_fingerprint(trace)
+
+        if 'clustered_state' in trace.info['analysis']:
+            for category_i, state in enumerate(['unclustered', 'clustered']):
+                trace.info[f'fingerprint_{state}'] = []
+                for sub_trace in trace.sub_trajectories_trajectories_from_confinement_states(custom_states=trace.info['analysis']['clustered_state'])[category_i]:
+                    try:
+                        calculate_msd_parameters(sub_trace, 0.50)
+                        trace.info[f'fingerprint_{state}'].append(get_trajectory_fingerprint(sub_trace))
+                    except AssertionError:
+                        pass
+                    except IndexError:
+                        pass
+    except AssertionError:
+        pass
 
     trace.save()
 
