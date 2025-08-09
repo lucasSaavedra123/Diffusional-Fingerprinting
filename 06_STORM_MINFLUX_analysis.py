@@ -81,6 +81,7 @@ if __name__ == "__main__":
     DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
     queries = {
+        'CDx':{'info.dataset':'CDx'},
         'CF®680R-BTX':{'info.dataset':'BTX680R'},
         'BTX640R':{'info.dataset':'Control'},
         'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
