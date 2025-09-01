@@ -34,6 +34,7 @@ from CONSTANTS import PROJECT_PATH
 import umap
 from collections import defaultdict
 
+indexes_to_remove = [get_feature_names().index(label) for label in ['$DCR_{Mean}$']]
 
 if __name__ == "__main__":
     categories = ['CF®680R-BTX(+fPEG-Chol)', 'fPEG-Chol(+CF®680R-BTX)']
@@ -97,6 +98,7 @@ if __name__ == "__main__":
 
         """Train classifiers to obtain insights"""
         Xdat = np.array(fingerprints)[:,:-5]
+        Xdat = np.delete(Xdat, indexes_to_remove, axis=-1)
         ydat = np.array(labels)
         conv_dict = dict(zip(range(len(new_categories)), list(new_categories)))
         ydat = np.array([conv_dict[i] for i in ydat])
@@ -220,6 +222,7 @@ if __name__ == "__main__":
             print("Computing ranked feature-plot")
             learn = ML(x, y)
             feature_names = get_feature_names()[:-5]
+            feature_names = np.delete(feature_names, indexes_to_remove, axis=-1)
             features_ranked, ranking_score = learn.Feature_rank(numfeats=5, names=np.array(feature_names), return_ranking=True)
 
             fig, ax = plt.subplots(5, 1, figsize=(6, 11))
