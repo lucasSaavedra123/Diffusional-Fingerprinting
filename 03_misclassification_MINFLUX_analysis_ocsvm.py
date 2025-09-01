@@ -60,49 +60,44 @@ if __name__ == "__main__":
 
         categories_labels = ['noISO', 'ISO']
 
-        """Get fingerprints"""
-        if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}.npy"):
-            DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
+        DatabaseHandler.connect_over_network(None, None, 'localhost', 'MINFLUX_DATA')
 
-            queries = {
-                'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
-                'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
-            }
+        queries = {
+            'CF®680R-BTX(+fPEG-Chol)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'BTX680R'},
+            'fPEG-Chol(+CF®680R-BTX)':{'info.dataset':'Cholesterol and btx', 'info.classified_experimental_condition':'fPEG-Chol'},
+        }
 
-            fingerprints = []
-            labels = []
-            #['analysis']['fingerprint_anomaly'][0/1]
-            for category_id, category in enumerate(categories):
-                query_fingerprints = Trajectory._get_collection().find(queries[category],
-                    {
-                        f'info.analysis.predictions_on_each_{state}_segments': 1,
-                        f'info.fingerprint.{state}': 1
-                    })
+        fingerprints = []
+        labels = []
+        #['analysis']['fingerprint_anomaly'][0/1]
+        for category_id, category in enumerate(categories):
+            query_fingerprints = Trajectory._get_collection().find(queries[category],
+                {
+                    f'info.analysis.predictions_on_each_{state}_segments': 1,
+                    f'info.fingerprint.{state}': 1
+                })
 
-                for fingerprint in tqdm(query_fingerprints):
-                    if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
-                        for sub_category_i, sub_category in enumerate(categories_labels):
-                            new_fingerprints = []
+            for fingerprint in tqdm(query_fingerprints):
+                if 'analysis' in fingerprint['info'] and f'predictions_on_each_{state}_segments' in fingerprint['info']['analysis']:
+                    for sub_category_i, sub_category in enumerate(categories_labels):
+                        new_fingerprints = []
 
-                            for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
-                                raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
+                        for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
+                            raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
 
-                                if sub_category == 'noISO' and fingerprint_classification['classification']=='not_iso':
-                                    new_fingerprints.append(raw_fingerprint)
-                                if sub_category == 'ISO' and fingerprint_classification['classification']=='iso':
-                                    new_fingerprints.append(raw_fingerprint)
+                            if sub_category == 'noISO' and fingerprint_classification['classification']=='not_iso':
+                                new_fingerprints.append(raw_fingerprint)
+                            if sub_category == 'ISO' and fingerprint_classification['classification']=='iso':
+                                new_fingerprints.append(raw_fingerprint)
 
-                            fingerprints.extend(new_fingerprints)
-                            labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
+                        fingerprints.extend(new_fingerprints)
+                        labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
 
-            DatabaseHandler.disconnect()
-
-            np.save(f"X_fingerprints_MINFLUX_anomaly_{state}", np.array(fingerprints))
-            np.save(f"y_MINFLUX_anomaly_{state}", np.array(labels))
+        DatabaseHandler.disconnect()
 
         """Train classifiers to obtain insights"""
-        Xdat = np.load(f"X_fingerprints_MINFLUX_anomaly_{state}.npy")[:,:-5]
-        ydat = np.load(f"y_MINFLUX_anomaly_{state}.npy")
+        Xdat = np.array(fingerprints)[:,:-5]
+        ydat = np.array(labels)
         conv_dict = dict(zip(range(len(new_categories)), list(new_categories)))
         ydat = np.array([conv_dict[i] for i in ydat])
 
