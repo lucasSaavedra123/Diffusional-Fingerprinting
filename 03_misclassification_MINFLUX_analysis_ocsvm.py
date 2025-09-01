@@ -14,6 +14,7 @@ Henrik Dahl Pinholt
 
 import matplotlib.pyplot as plt
 import matplotlib
+import pandas as pd
 from traj_fingerprint.Features.Fingerprint_feat_gen import ThirdAppender
 from MLGeneral import ML, histogram
 import os
@@ -70,12 +71,16 @@ if __name__ == "__main__":
 
         fingerprints = []
         labels = []
+        files = []
+        rois = []
         #['analysis']['fingerprint_anomaly'][0/1]
         for category_id, category in enumerate(categories):
             query_fingerprints = Trajectory._get_collection().find(queries[category],
                 {
                     f'info.analysis.predictions_on_each_{state}_segments': 1,
-                    f'info.fingerprint.{state}': 1
+                    f'info.fingerprint.{state}': 1,
+                    f'info.roi': 1,
+                    f'info.file': 1
                 })
 
             for fingerprint in tqdm(query_fingerprints):
@@ -88,13 +93,36 @@ if __name__ == "__main__":
 
                             if sub_category == 'noISO' and fingerprint_classification['classification']=='not_iso':
                                 new_fingerprints.append(raw_fingerprint)
+                                files.append(fingerprint['info']['file'])
+                                rois.append(fingerprint['info']['roi'])
                             if sub_category == 'ISO' and fingerprint_classification['classification']=='iso':
                                 new_fingerprints.append(raw_fingerprint)
+                                files.append(fingerprint['info']['file'])
+                                rois.append(fingerprint['info']['roi'])
 
                         fingerprints.extend(new_fingerprints)
                         labels.extend([new_categories.index(category+" "+sub_category)] * len(new_fingerprints))
 
         DatabaseHandler.disconnect()
+
+        df = pd.DataFrame({'file': files, 'roi':rois, 'label':labels})
+        df["label"] = df["label"].map(lambda x: new_categories[x])
+        df[["condition", "label"]] = df["label"].str.rsplit(" ", n=1, expand=True)
+
+        counts = df.groupby(["file", "roi", "condition", "label"]).size().reset_index(name="count")
+
+        pivot = counts.pivot_table(
+            index=["file", "roi", "condition"],
+            columns="label",
+            values="count",
+            fill_value=0
+        ).reset_index()
+
+        pivot["total"] = pivot.get("ISO", 0) + pivot.get("noISO", 0)
+        pivot["pct_ISO"] = pivot.get("ISO", 0) / pivot["total"] * 100
+        pivot["pct_noISO"] = pivot.get("noISO", 0) / pivot["total"] * 100
+
+        pivot.to_csv(f"iso_vs_noiso_{state}.csv")
 
         """Train classifiers to obtain insights"""
         Xdat = np.array(fingerprints)[:,:-5]
