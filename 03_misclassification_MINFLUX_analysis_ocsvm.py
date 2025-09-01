@@ -40,25 +40,25 @@ if __name__ == "__main__":
     states = ['normal', 'directed', 'confinement', 'subdifussive']
     for state in states:
         new_categories = [
-            'CF®680R-BTX(+fPEG-Chol) NoMisclassified',
-            'CF®680R-BTX(+fPEG-Chol) Misclassified',
-            'fPEG-Chol(+CF®680R-BTX) NoMisclassified',
-            'fPEG-Chol(+CF®680R-BTX) Misclassified',
+            'CF®680R-BTX(+fPEG-Chol) ISO',
+            'CF®680R-BTX(+fPEG-Chol) noISO',
+            'fPEG-Chol(+CF®680R-BTX) ISO',
+            'fPEG-Chol(+CF®680R-BTX) noISO',
         ]
 
         category_to_colors = {
-            'CF®680R-BTX(+fPEG-Chol) NoMisclassified':'darkgray',
-            'CF®680R-BTX(+fPEG-Chol) Misclassified':'purple',
-            'fPEG-Chol(+CF®680R-BTX) NoMisclassified':'darkgreen',
-            'fPEG-Chol(+CF®680R-BTX) Misclassified':'darkorange',
+            'CF®680R-BTX(+fPEG-Chol) ISO':'darkgray',
+            'CF®680R-BTX(+fPEG-Chol) noISO':'purple',
+            'fPEG-Chol(+CF®680R-BTX) ISO':'darkgreen',
+            'fPEG-Chol(+CF®680R-BTX) noISO':'darkorange',
         }
 
         category_to_colors = {
-            'NoMisclassified':'darkgray',
-            'Misclassified':'purple',
+            'ISO':'darkgray',
+            'noISO':'purple',
         }
 
-        categories_labels = ['Misclassified', 'NoMisclassified']
+        categories_labels = ['noISO', 'ISO']
 
         """Get fingerprints"""
         if not os.path.isfile(f"X_fingerprints_MINFLUX_anomaly_{state}.npy"):
@@ -87,9 +87,9 @@ if __name__ == "__main__":
                             for fingerprint_classification in fingerprint['info']['analysis'][f'predictions_on_each_{state}_segments']:
                                 raw_fingerprint = [f for f in fingerprint['info']['fingerprint'][state] if f['sub_trace_i']==int(fingerprint_classification['sub_trace_i'])][0]['fingerprint']
 
-                                if sub_category == 'Misclassified' and fingerprint_classification['classification'][0] != fingerprint_classification['classification'][1]:
+                                if sub_category == 'noISO' and fingerprint_classification['classification']=='not_iso':
                                     new_fingerprints.append(raw_fingerprint)
-                                if sub_category == 'NoMisclassified' and fingerprint_classification['classification'][0] == fingerprint_classification['classification'][1]:
+                                if sub_category == 'ISO' and fingerprint_classification['classification']=='iso':
                                     new_fingerprints.append(raw_fingerprint)
 
                             fingerprints.extend(new_fingerprints)
