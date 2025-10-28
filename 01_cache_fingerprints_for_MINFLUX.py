@@ -92,6 +92,7 @@ def calculate_and_save_fingerprint_for_id(arguments):
                 except AssertionError:
                     pass
 
+        trace.save()
         undersampled_trace = trace.undersample(0.010)
         calculate_msd_parameters(undersampled_trace, max_t=0.50, undersampled=True)
         trace.info['fingerprint']['undersampled'] = get_trajectory_fingerprint(undersampled_trace)
