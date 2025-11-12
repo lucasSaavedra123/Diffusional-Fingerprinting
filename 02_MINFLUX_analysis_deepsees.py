@@ -14,62 +14,21 @@ Henrik Dahl Pinholt
 
 import matplotlib.pyplot as plt
 import matplotlib
-from traj_fingerprint.Features.Fingerprint_feat_gen import ThirdAppender
 from MLGeneral import ML, histogram
 import os
 from pomegranate import *
 import numpy as np
 # import multiprocess as mp
 from sklearn.metrics import confusion_matrix
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn.model_selection import train_test_split
 from matplotlib.colors import LinearSegmentedColormap
 from tqdm import tqdm
 from Trajectory import Trajectory
 from DatabaseHandler import DatabaseHandler
 from traj_fingerprint.Features import get_trajectory_fingerprint, get_feature_names
-from multiprocessing import Pool
 from imblearn.under_sampling import RandomUnderSampler
 from CONSTANTS import PROJECT_PATH
-from collections import Counter
-import umap
-from collections import defaultdict
-def pool_get_trajectory_fingerprint(traj):
-    try:
-        return get_trajectory_fingerprint(traj)
-    except AssertionError:
-        pass
 
-def calculate_msd_parameters(traj):
-    DELTA_T = 0.000132
-    TIME_START = 0.000084
-    MAX_T = 0.050
-
-    t_vec, msd, d, betha, precision, goodness_of_fit = traj.temporal_average_mean_squared_displacement(
-        log_log_fit_limit=MAX_T,
-        limit_type='time',
-        bin_width=DELTA_T,
-        time_start=TIME_START,
-        with_corrections=True
-    )
-
-    msd = msd[t_vec < MAX_T]
-    t_vec = t_vec[t_vec < MAX_T]
-
-    traj.info['t_vec'] = t_vec
-    traj.info['msd'] = msd
-    traj.info['d'] = d
-    traj.info['betha'] = betha
-    traj.info['precision'] = precision
-    traj.info['goodness_of_fit'] = goodness_of_fit
-
-def cache_msd_info(traces):
-    for trace in traces.copy():
-        try:
-            calculate_msd_parameters(trace)
-        except AssertionError:
-            traces.remove(trace)
-    return traces
 
 def get_colors(num_states):
     cmap = plt.cm.get_cmap('turbo',num_states)
@@ -223,6 +182,7 @@ if __name__ == "__main__":
         print("Computing ranked feature-plot")
         learn = ML(x, y)
         feature_names = get_feature_names()[:-5]
+        feature_names = np.array(feature_names)[mask_columnas_validas]
         features_ranked, ranking_score = learn.Feature_rank(numfeats=5, names=np.array(feature_names), return_ranking=True)
 
         fig, ax = plt.subplots(5, 1, figsize=(6, 11))
