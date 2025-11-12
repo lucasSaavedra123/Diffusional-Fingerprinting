@@ -75,15 +75,16 @@ if __name__ == "__main__":
     feature_names = get_feature_names()[:-5]
     feature_names = np.array(feature_names)[mask_columnas_validas]
 
+    np.save('deepsees_Xdat.npy',Xdat)
+    np.save('deepsees_ydat.npy',ydat)
+    np.save('deepsees_feature_names.npy',feature_names)
+    exit()
     df = pd.DataFrame(Xdat, columns=feature_names)
     df = df.astype(np.float)
 
     corr_matrix = df.corr()
-    corr_unstacked = corr_matrix.abs().unstack().sort_values(ascending=False)
-
-    corr_unstacked = corr_unstacked[corr_unstacked < 1]
-    corr_unstacked = corr_unstacked[~corr_unstacked.index.duplicated(keep='first')]
-
+    mask = np.triu(np.ones_like(corr_matrix, dtype=bool), k=1)
+    corr_unstacked = corr_matrix.where(mask).unstack().dropna().sort_values(ascending=False)
     total_pairs = len(corr_unstacked)
 
     step = 5
@@ -93,25 +94,51 @@ if __name__ == "__main__":
         if corr_slice.empty:
             break
 
-        print(corr_slice)
-
         num_pairs = len(corr_slice)
-        plt.figure(figsize=(18, 12))
-
+        plt.figure(figsize=(18, 5))
         for i, ((var1, var2), corr_val) in enumerate(corr_slice.items(), 1):
-            plt.subplot(3, 3, i)
-            sns.scatterplot(x=df[var1], y=df[var2], alpha=0.6)
+            plt.subplot(1, 5, i)
+            sns.scatterplot(
+                x=df[var1],
+                y=df[var2],
+                hue=ydat,
+                palette=colors,
+                alpha=0.6,
+                legend=False
+            )
 
-            # Ajuste lineal (línea de correlación)
             slope, intercept = np.polyfit(df[var1], df[var2], 1)
             x_vals = np.linspace(df[var1].min(), df[var1].max(), 100)
-            plt.plot(x_vals, slope * x_vals + intercept, color='red', linestyle='--', label='Línea de correlación')
+            plt.plot(x_vals, slope * x_vals + intercept, color='black', linestyle='--')
 
             plt.title(f"{var1} vs {var2}\n r = {corr_val:.2f}")
             plt.xlabel(var1)
             plt.ylabel(var2)
-            plt.legend()
 
-        plt.suptitle(f"Pares de variables correlacionadas (posiciones {start+1}–{end})", fontsize=16)
+        plt.suptitle(f"Colored by state (positions {start+1}–{end})", fontsize=16)
         plt.tight_layout(rect=[0, 0, 1, 0.96])
-        plt.savefig(f'correlation_{start}.jpeg', dpi=300)
+        plt.savefig(f'correlation_statecolors_{start}.jpeg', dpi=300)
+        plt.close()
+
+        plt.figure(figsize=(18, 5))
+        for i, ((var1, var2), corr_val) in enumerate(corr_slice.items(), 1):
+            plt.subplot(1, 5, i)
+            sns.scatterplot(
+                x=df[var1],
+                y=df[var2],
+                color='gray',
+                alpha=0.6
+            )
+
+            slope, intercept = np.polyfit(df[var1], df[var2], 1)
+            x_vals = np.linspace(df[var1].min(), df[var1].max(), 100)
+            plt.plot(x_vals, slope * x_vals + intercept, color='red', linestyle='--')
+
+            plt.title(f"{var1} vs {var2}\n r = {corr_val:.2f}")
+            plt.xlabel(var1)
+            plt.ylabel(var2)
+
+        plt.suptitle(f"Generic color (positions {start+1}–{end})", fontsize=16)
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.savefig(f'correlation_generic_{start}.jpeg', dpi=300)
+        plt.close()
